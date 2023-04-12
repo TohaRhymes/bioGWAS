@@ -5,19 +5,19 @@ Human GWAS data simulator using 1000 human genomes project data.
 ### 1. Getting simulated data
 * [one-time] Download files from 1khg web-site: `./download_script.sh`
     * ungzip, beautify headers
-* [one-time] Preprocess files: `./1_script_make_eur_haplo.sh > 1_script_make_eur_haplo.log`:
+* [one-time] Preprocess files: `./1_script_make_eur_haplo.sh ./data chr 0.05 ./EUR_SAMPLES_ID.txt  > 1_script_make_eur_haplo.log`:
     * Filter: only 2-alleles SNPs, EUR samples, MAF > 0.05
     * --export ped + --export hapslegend
-* Run hapgen to make samplings: `./2_script_hapgen.sh`
-* Correct files: `./3_script_rename_hap.sh > 3_script_rename_hap.log`
+* Run hapgen to make samplings: `./2_script_hapgen.sh ./data chr 5000`
+* Correct files: `./3_script_rename_hap.sh ./data chr > 3_script_rename_hap.log`
 ### 2. Merge this data
 Merged all bfiles to one and made vcf & ucsc’s bed.
-These 2 steps in one script: `./4_script_make_sim_bfile.sh > 4_script_make_sim_bfile.log`
+These 2 steps in one script: `./4_script_make_sim_bfile.sh ./data chr 5010 > 4_script_make_sim_bfile.log`
 
 ### 3. Annotation 
-* [one-time] `./script_download_gtf.sh` - download gtf file with genes
-* `./script_make_gtf.sh` - prepare gtf file with genes
-* `bedtools closest -d -a filtered_chr_EUR_sim_ucsc.bed -b gen_gencode.v37.annotation.gene.sorted.gtf  > chr_EUR_sim.sorted.annotated.bed` -- annotate bfile with bedtools closest.
+* [one-time] `./download_gtf.sh ./data` - download gtf file with genes
+* `./5_script_make_gtf.sh ./data gencode.v37.annotation` - prepare gtf file with genes
+* `./6_bedtools_closest.sh ./data chr gencode.v37.annotation` -- annotate bfile with bedtools closest.
 
 ### 4. Getting set of snps
 
