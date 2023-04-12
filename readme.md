@@ -13,7 +13,8 @@ Merged all bfiles to one and made vcf & ucsc’s bed.
 These 2 steps in one script: `./script_make_sim_bfile.sh > script_make_sim_bfile.log`
 
 ### 3. Annotation 
-* [one-time] `./script_make_gtf.sh` - download and prepare gtf file with genes
+* [one-time] `./script_download_gtf.sh` - download gtf file with genes
+* `./script_make_gtf.sh` - prepare gtf file with genes
 * `bedtools closest -d -a filtered_chr_EUR_sim_ucsc.bed -b gen_gencode.v37.annotation.gene.sorted.gtf  > chr_EUR_sim.sorted.annotated.bed` -- annotate bfile with bedtools closest.
 
 ### 4. Getting set of snps

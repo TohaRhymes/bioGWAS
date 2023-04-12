@@ -1,7 +1,3 @@
-# download gzip-file
-wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_37/gencode.v37.annotation.gtf.gz
-gzip -d gencode.v37.annotation.gtf.gz 
-
 #extract only "gene" features from gtf
 > gen_gencode.v37.annotation.gtf
 awk -F'\t' 'NR>=6 && $3=="gene"' gencode.v37.annotation.gtf >>  gen_gencode.v37.annotation.gtf
