@@ -3,17 +3,16 @@
 Human GWAS data simulator using 1000 human genomes project data.
 
 ### 1. Getting simulated data
-* [one-time] Downloaded files from 1khg web-site: `./download_script.sh`
-    * Before filtering by MAF, there were a lot of snips (~90% were gone), and hapgen worked super long, so it was a good idea to filter right before generation (if you need another cutoff, it's better to filter right away) -- next step.
-* [one-time] Preprocess files: `./script_make_eur_haplo.sh > script_make_eur_haplo.log`:
+* [one-time] Download files from 1khg web-site: `./download_script.sh`
     * ungzip, beautify headers
+* [one-time] Preprocess files: `./1_script_make_eur_haplo.sh > 1_script_make_eur_haplo.log`:
     * Filter: only 2-alleles SNPs, EUR samples, MAF > 0.05
     * --export ped + --export hapslegend
-* Run hapgen: `./script_hapgen.sh`
-* Correct files: `./script_rename_hap.sh > script_rename_hap.log`
+* Run hapgen to make samplings: `./2_script_hapgen.sh`
+* Correct files: `./3_script_rename_hap.sh > 3_script_rename_hap.log`
 ### 2. Merge this data
 Merged all bfiles to one and made vcf & ucsc’s bed.
-These 2 steps in one script: `./script_make_sim_bfile.sh > script_make_sim_bfile.log`
+These 2 steps in one script: `./4_script_make_sim_bfile.sh > 4_script_make_sim_bfile.log`
 
 ### 3. Annotation 
 * [one-time] `./script_download_gtf.sh` - download gtf file with genes
