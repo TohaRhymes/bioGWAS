@@ -1,5 +1,5 @@
 data_dir: data
-vcfs_list: vcfs.list
+vcfs_list: chr.list
 maf_filter: 0.05
 ids_file: EUR_SAMPLES_ID.txt
-N: 5000
+N: 5

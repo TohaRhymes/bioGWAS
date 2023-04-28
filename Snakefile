@@ -11,17 +11,26 @@ MAF_FILTER = config['maf_filter']
 N = config['N']
 IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
 
-output_pattern = f"{DATA_DIR}/{{file}}_filt_sim.gen"
-input_pattern = f"{DATA_DIR}/{{file}}.vcf"
+output_pattern = os.path.join(DATA_DIR, "{file}_filt_sim.bed")
 
-with open(f"{DATA_DIR}/{VCFS_LIST}") as f:
-    files = [line.strip() for line in f]
+with open(os.path.join(DATA_DIR, VCFS_LIST)) as f:
+    file_chrom = [line.strip().split(',') for line in f]
+    file2chrom = {k:v for k, v in file_chrom}
+    files = list(file2chrom.keys())
     
+def get_chrom(wildcards):
+    return file2chrom[os.path.basename(wildcards.file)]
+    
+PATTERN = f"{VCFS_LIST}".replace('.list', '')
+    
+with open(os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.list"), 'w') as f:
+    f.write('\n'.join(map(lambda x: f"{os.path.join(DATA_DIR, x)}_filt_sim", files)))
 
 rule all:
     priority: 1000
     input:
-        expand(output_pattern, file=files)
+        input_file=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.vcf")
+
 
 rule filter_vcf:
     input:
@@ -78,9 +87,92 @@ rule postprocess_hapgen2:
     priority: 5
     shell:
         f"""
-        rm {{wildcards.file}}_filt_sim.controls.*
+        rm {{wildcards.file}}_filt_sim.cases.*
+        rm {{wildcards.file}}_filt.*
         rename 's,sim\.controls,sim,' {{wildcards.file}}_filt_sim.controls.*
-        """
+        """        
 
+
+rule change_snp_hapgen:
+    input:
+        input_file="{file}_filt_sim.gen"
+    output:
+        output_file="{file}_filt_sim_.gen"
+    priority: 6
+    params:
+        myparam = get_chrom
+    run:         
+        shell(f"""sed s/"snp_"/"{{params.myparam}} snp{{params.myparam}}_"/g {{input.input_file}} > {{output.output_file}}""")
+
+
+rule make_bed_from_hapgen2:
+    input:
+        input_file="{file}_filt_sim_.gen"
+    output:
+        output_file="{file}_filt_sim.bed"
+    priority: 7
+    shell:
+        f"""
+        rm {{wildcards.file}}_filt_sim.gen
+        mv {{wildcards.file}}_filt_sim_.gen {{wildcards.file}}_filt_sim.gen
+         plink2 \
+         --data {{wildcards.file}}_filt_sim ref-first \
+         --make-bed \
+         --out {{wildcards.file}}_filt_sim
+        """
+        
+        
+rule merge_chroms:
+    input:
+        input_file=expand(output_pattern, file=files)
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
+    priority: 7
+    shell:
+        f"""
+        plink2 \
+        --pmerge-list {os.path.join(DATA_DIR, PATTERN)}_filt_sim.list bfile \
+        --set-all-var-ids @:# \
+        --make-bed \
+        --out {os.path.join(DATA_DIR, PATTERN)}_filt_sim
+        """        
+        
+rule recode_merged:
+    input:
+        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf")
+    priority: 7
+    shell:
+        f"""
+        plink2 --bfile {os.path.join(DATA_DIR, PATTERN)}_filt_sim \
+        --recode vcf \
+        --out {os.path.join(DATA_DIR, PATTERN)}_filt_sim
+        
+        vcf2bed < {os.path.join(DATA_DIR, PATTERN)}_filt_sim.vcf > {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
+        
+        awk -v N={N+10} 'NF==N' {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed > {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed 
+        
+        rm {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
+        
+        mv {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
+        """
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
