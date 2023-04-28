@@ -3,3 +3,4 @@ vcfs_list: chr.list
 maf_filter: 0.05
 ids_file: EUR_SAMPLES_ID.txt
 N: 5
+anno_file: gencode.v37.annotation.gtf

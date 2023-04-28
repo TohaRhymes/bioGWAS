@@ -10,8 +10,9 @@ VCFS_LIST = config['vcfs_list']
 MAF_FILTER = config['maf_filter']
 N = config['N']
 IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
+GTF_IN = config['anno_file'].replace('.gtf', '')
 
-output_pattern = os.path.join(DATA_DIR, "{file}_filt_sim.bed")
+splitted_pattern = os.path.join(DATA_DIR, "{file}_filt_sim.bed")
 
 with open(os.path.join(DATA_DIR, VCFS_LIST)) as f:
     file_chrom = [line.strip().split(',') for line in f]
@@ -29,7 +30,7 @@ with open(os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.list"), 'w') as f:
 rule all:
     priority: 1000
     input:
-        input_file=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.vcf")
+        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.bed")
 
 
 rule filter_vcf:
@@ -124,10 +125,10 @@ rule make_bed_from_hapgen2:
         
 rule merge_chroms:
     input:
-        input_file=expand(output_pattern, file=files)
+        input_file=expand(splitted_pattern, file=files)
     output:
         output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
-    priority: 7
+    priority: 8
     shell:
         f"""
         plink2 \
@@ -141,25 +142,51 @@ rule recode_merged:
     input:
         input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
     output:
-        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf")
-    priority: 7
+        output_file_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"),
+        output_file_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
+    priority: 9
     shell:
         f"""
         plink2 --bfile {os.path.join(DATA_DIR, PATTERN)}_filt_sim \
         --recode vcf \
         --out {os.path.join(DATA_DIR, PATTERN)}_filt_sim
         
+        # vcf to ucsc's bed (vcf2bed sorts it by default)
         vcf2bed < {os.path.join(DATA_DIR, PATTERN)}_filt_sim.vcf > {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
         
+        # some of rows sont include all samples - filter 'em
         awk -v N={N+10} 'NF==N' {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed > {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed 
         
+        # rename files
         rm {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
-        
         mv {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
         """
         
         
+rule transform_gtf:
+    input:
+        input_file=os.path.join(DATA_DIR,f"{GTF_IN}.gtf")
+    output:
+        output_file=os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf")
+    priority: 10
+    shell:
+        f"""
+        ./5_script_make_gtf.sh {DATA_DIR} {GTF_IN}
+        """
         
+        
+        
+rule annotate_bed:
+    input:
+        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
+        input_gtf=os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf")
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.bed")
+    priority: 11
+    shell:
+        f"""
+        bedtools closest -d -a {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed -b {os.path.join(DATA_DIR, GTF_IN)}_filt_sort.gtf  > {os.path.join(DATA_DIR, PATTERN)}_filt_sim_anno.bed
+        """        
         
         
         
