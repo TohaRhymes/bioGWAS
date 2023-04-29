@@ -21,7 +21,7 @@ These 2 steps in one script: `./4_script_make_sim_bfile.sh ./data chr 5010 > 4_s
 
 ### 4. Getting set of snps
 
-Using annotated SNPs and gmt-file with list of pathways we can select list of causal SNPs. Script:  `./get_snps_set.py`
+Using annotated SNPs and gmt-file with list of pathways we can select list of causal SNPs. Script:  `./get_snps_set.py data chr data/chr_filt_sim_anno.bed data/h.all.v2023.1.Hs.symbols.gmt data/pathways.csv 20 10`
 
 ### 5. Extracting specific SNPs from bfile for simulation
 
