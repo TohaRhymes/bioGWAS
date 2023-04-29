@@ -10,10 +10,10 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def fraw_PCA(FILE_PREFIX):
+def draw_PCA(FILE_PREFIX, IMAGES_PREFIX):
     VEC = f"{FILE_PREFIX}.eigenvec"
     VAL = f"{FILE_PREFIX}.eigenval"
-    TO = f"{FILE_PREFIX}_pca.pdf"
+    TO = f"{IMAGES_PREFIX}_pca.pdf"
 
     data = pd.read_csv(VEC, sep='\t')
     eigenval = pd.read_csv(VAL, sep='\t', header=None)
@@ -34,4 +34,5 @@ def fraw_PCA(FILE_PREFIX):
     
 
 FILE_PREFIX = sys.argv[1]
-fraw_PCA(FILE_PREFIX)
+IMAGES_PREFIX = sys.argv[2]
+draw_PCA(FILE_PREFIX, IMAGES_PREFIX)

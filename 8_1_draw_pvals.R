@@ -28,6 +28,12 @@ prepare_snp <- function(FILE) {
 
 draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
   CMplot(table,
+         plot.type = "q", col = color, box = FALSE, file = format, memo = name, dpi = 500,
+         conf.int = TRUE, conf.int.col = NULL, threshold.col = "red", threshold.lty = 2,
+         file.output = TRUE, verbose = TRUE,
+         width = 5, height = 3.5
+  )
+  CMplot(table,
          plot.type = "m", col = c("grey40", "grey70"), # chr colors
          highlight = SNPs,
          highlight.text = genes,
@@ -45,35 +51,21 @@ draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8
          dpi = 500, file.output = TRUE, verbose = TRUE,
          width = 14, height = 5
   )
-  CMplot(table,
-         plot.type = "q", col = color, box = FALSE, file = format, memo = name, dpi = 500,
-         conf.int = TRUE, conf.int.col = NULL, threshold.col = "red", threshold.lty = 2,
-         file.output = TRUE, verbose = TRUE,
-         width = 5, height = 3.5
-  )
 }
 
 
 args = commandArgs(trailingOnly=TRUE)
-PHENO_NAME <- args[1]
-FILE <- args[2]
-cat(PHENO_NAME)
-cat("\n")
-cat(FILE)
-cat("\n")
-# ./DRAW.R metal /media/array/pregnancy/data/extended_attempt1.TBL
-# PHENO_NAME <- 'metal'
-# FILE <- "/media/array/pregnancy/data/extended_attempt1.TBL"
+
 
 colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
-COLOR <- sample(colors, 1)
+color <- sample(colors, 1)
 
-pheno_name <- PHENO_NAME
-color <- COLOR
+pheno_name <- args[1]
+file_pval <- args[2]
 
-table <- prepare_snp(FILE)
+table <- prepare_snp(file_pval)
 
-max_pval <- max(-log10(table$pval))
+max_pval <- max(-log10(table$pval), na.rm=TRUE)
 max_pval <- ceiling(max_pval)
 cutoff <-  round(max_pval*0.8)
 
