@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Make independent set of SNPs
 plink2 \
 --bfile chr_EUR_sim \

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DATENOW=$( date )
 echo "Started at: $DATENOW"
