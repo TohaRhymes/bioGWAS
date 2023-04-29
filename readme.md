@@ -34,8 +34,14 @@ Use PhenotypeSimulator and R-script:
 
 ### 7. GWAS and PCA 
 
-Script with GWAS and PCA (plink):
-`./gwas_analysis.sh`
+Script with GWAS:
+`./7_1_gwas_analysis.sh ./data/chr_filt_sim ./data/phenos_1 ./data/chr_1_gwas`
+
+Script with PCA:
+`./7_2_calc_indep_snps_and_pca.sh ./data/chr_filt_sim`
+
+
+### 8. Draw GWAS and PCA
 
 Draw:
 * `./draw_pvals.R chr_EUR_sim_p1 chr_EUR_sim_p1.tsv` -- Q-Q plot and Manhattan plot;

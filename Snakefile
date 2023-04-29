@@ -40,7 +40,8 @@ with open(os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.list"), 'w') as f:
 rule all:
     priority: 1000
     input:
-        input_file=os.path.join(DATA_DIR,f"phenos_{PHENOS_ID}.tsv")
+        input_file=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas.tsv"),
+        output_pca=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.eigenval"),
 
 
 rule filter_vcf:
@@ -74,15 +75,17 @@ rule hapgen2:
         input_file="{file}_filt.haps"
     output:
         output_file="{file}_filt_sim.controls.gen"
+    params:
+        data="{file}_filt"
     priority: 4
     shell:
         f"""
         hapgen2 \
-        -h {{wildcards.file}}_filt.haps \
-        -l {{wildcards.file}}_filt.legend \
-        -m {{wildcards.file}}_filt.map \
-        -o {{wildcards.file}}_filt_sim \
-        -dl $(bcftools query -f "%POS\n" {{wildcards.file}}_filt.vcf | head -n 1) 1 1.5 2.25 \
+        -h {{params.data}}.haps \
+        -l {{params.data}}.legend \
+        -m {{params.data}}.map \
+        -o {{params.data}}_sim \
+        -dl $(bcftools query -f "%POS\n" {{params.data}}.vcf | head -n 1) 1 1.5 2.25 \
         -int 0 500000000 \
         -n {N} 0 \
         -Ne 11418 \
@@ -122,15 +125,17 @@ rule make_bed_from_hapgen2:
         input_file="{file}_filt_sim.gen"
     output:
         output_file="{file}_filt_sim.bed"
+    params:
+        data="{file}_filt_sim"
     priority: 7
     shell:
         f"""
         rm {{input.input_file}}
         mv {{input.input_file_}} {{input.input_file}}
          plink2 \
-         --data {{wildcards.file}}_filt_sim ref-first \
+         --data {{params.data}} ref-first \
          --make-bed \
-         --out {{wildcards.file}}_filt_sim
+         --out {{params.data}}
         """
         
         
@@ -140,13 +145,15 @@ rule merge_chroms:
     output:
         output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
     priority: 8
+    params:
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
     shell:
         f"""
         plink2 \
-        --pmerge-list {os.path.join(DATA_DIR, PATTERN)}_filt_sim.list bfile \
+        --pmerge-list {{params.data}}.list bfile \
         --set-all-var-ids @:# \
         --make-bed \
-        --out {os.path.join(DATA_DIR, PATTERN)}_filt_sim
+        --out {{params.data}}
         """        
         
 rule recode_merged:
@@ -156,21 +163,24 @@ rule recode_merged:
         output_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"),
         output_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
     priority: 9
+    params:
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
+        f_data=os.path.join(DATA_DIR, f"filtered_{PATTERN}_filt_sim_ucsc")
     shell:
         f"""
-        plink2 --bfile {os.path.join(DATA_DIR, PATTERN)}_filt_sim \
+        plink2 --bfile {{params.data}} \
         --recode vcf \
-        --out {os.path.join(DATA_DIR, PATTERN)}_filt_sim
+        --out {{params.data}}
         
         # vcf to ucsc's bed (vcf2bed sorts it by default)
         vcf2bed < {{output.output_vcf}} > {{output.output_bed}}
         
         # some of rows sont include all samples - filter 'em
-        awk -v N={N+10} 'NF==N' {{output.output_bed}} > {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed 
+        awk -v N={N+10} 'NF==N' {{output.output_bed}} > {{params.f_data}}.bed 
         
         # rename files
         rm {{output.output_bed}}
-        mv {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed {{output.output_bed}}
+        mv {{params.f_data}}.bed {{output.output_bed}}
         """
         
         
@@ -227,12 +237,14 @@ rule extract_snps:
     output:
         output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps.bed")
     priority: 13
+    params:
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim_snps")
     shell:
         f"""
         plink2 \
         --bfile {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim")} \
         --extract range {{input.input_tsv}} \
-        --make-bed --out {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps")}
+        --make-bed --out {{params.data}}
         """   
         
 
@@ -245,13 +257,14 @@ rule pheno_sim:
     params:
         data_dir=DATA_DIR,
         K=K,
-        N=N
+        N=N,
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim_snps")
     priority: 14
     shell:
         f"""
         ./6_1_pheno_sim.R \
         ./ \
-        {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps")} \
+        {{params.data}} \
         {{output.output_file}} \
         {{params.N}} \
         {{params.K}} \
@@ -261,7 +274,41 @@ rule pheno_sim:
         """   
         
 # todo make custom gwas        
-# rule 
+rule gwas:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
+        input_pheno=os.path.join(DATA_DIR,f"phenos_{PHENOS_ID}.tsv"),
+    output:
+        output_gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas.tsv")
+    priority: 15
+    params:
+        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
+        pheno=os.path.join(DATA_DIR,f"phenos_{PHENOS_ID}"),
+        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas")
+    shell:
+        f"""
+        ./7_1_gwas_analysis.sh \
+        {{params.bed}} \
+        {{params.pheno}} \
+        {{params.gwas}}
+        """   
+             
+             
+rule pca:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
+    output:
+        output_pca=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.eigenval"),
+        output_pca_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep.eigenval")
+    priority: 16
+    params:
+        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
+    shell:
+        f"""
+        ./7_2_calc_indep_snps_and_pca.sh \
+        {{params.bed}}
+        """  
+        
         
         
         
