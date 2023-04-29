@@ -4,3 +4,11 @@ maf_filter: 0.05
 ids_file: EUR_SAMPLES_ID.txt
 N: 5
 anno_file: gencode.v37.annotation.gtf
+gmt_data: h.all.v2023.1.Hs.symbols.gmt
+pathways: pathways.csv
+phenos_id: ph1
+K: 10
+k: 5
+gen_var: 0.5
+h2s: 0.5
+shared: 0.5

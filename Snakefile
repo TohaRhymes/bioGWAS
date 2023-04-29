@@ -14,8 +14,13 @@ IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
 GTF_IN = config['anno_file'].replace('.gtf', '')
 GMT_IN = config['gmt_data'].replace('.gmt', '')
 PATH_FILE = config['pathways']
+PHENOS_ID = config['phenos_id']
 K = config['K']
 k = config['k']
+GEN_VAR = config['gen_var']
+H2S = config['h2s']
+SHARED = config['shared']
+
 
 splitted_pattern = os.path.join(DATA_DIR, "{file}_filt_sim.bed")
 
@@ -35,7 +40,7 @@ with open(os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.list"), 'w') as f:
 rule all:
     priority: 1000
     input:
-        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps.bed")
+        input_file=os.path.join(DATA_DIR,f"phenos_{PHENOS_ID}.tsv")
 
 
 rule filter_vcf:
@@ -230,6 +235,30 @@ rule extract_snps:
         --make-bed --out {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps")}
         """   
         
+
+
+rule pheno_sim:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps.bed")
+    output:
+        output_file=os.path.join(DATA_DIR,f"phenos_{PHENOS_ID}.tsv")
+    params:
+        data_dir=DATA_DIR,
+        K=K,
+        N=N
+    priority: 14
+    shell:
+        f"""
+        ./pheno_sim.R \
+        ./ \
+        {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps")} \
+        {{output.output_file}} \
+        {{params.N}} \
+        {{params.K}} \
+        {{GEN_VAR}} \
+        {{H2S}} \
+        {{SHARED}}
+        """   
         
         
         
