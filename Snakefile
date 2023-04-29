@@ -182,7 +182,7 @@ rule transform_gtf:
     priority: 10
     shell:
         f"""
-        ./5_script_make_gtf.sh {DATA_DIR} {GTF_IN}
+        ./3_2_script_make_gtf.sh {DATA_DIR} {GTF_IN}
         """
         
         
@@ -216,7 +216,7 @@ rule get_snps_list:
     priority: 12
     shell:
         f"""
-        ./get_snps_set.py {{params.data_dir}} {{params.pattern}} {{input.input_bed}} {{input.input_gmt}} {{input.input_path}} {{params.K}} {{params.k}}
+        ./4_1_get_snps_set.py {{params.data_dir}} {{params.pattern}} {{input.input_bed}} {{input.input_gmt}} {{input.input_path}} {{params.K}} {{params.k}}
         """     
 
 
@@ -249,7 +249,7 @@ rule pheno_sim:
     priority: 14
     shell:
         f"""
-        ./pheno_sim.R \
+        ./6_1_pheno_sim.R \
         ./ \
         {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps")} \
         {{output.output_file}} \
@@ -259,6 +259,9 @@ rule pheno_sim:
         {{H2S}} \
         {{SHARED}}
         """   
+        
+# todo make custom gwas        
+# rule 
         
         
         
