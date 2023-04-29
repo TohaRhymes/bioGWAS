@@ -25,7 +25,7 @@ Using annotated SNPs and gmt-file with list of pathways we can select list of ca
 
 ### 5. Extracting specific SNPs from bfile for simulation
 
-Just use fiule from previous step and plink: `plink2 --bfile chr_EUR_sim --extract range snps_chr_EUR.tsv --make-bed --out chr_EUR_sim_snps`
+Just use fiule from previous step and plink: `plink2 --bfile chr_EUR_sim --extract range chr_chosen_snps.tsv --make-bed --out chr_EUR_sim_snps`
 
 ### 6. Simulation
 

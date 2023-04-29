@@ -10,7 +10,12 @@ VCFS_LIST = config['vcfs_list']
 MAF_FILTER = config['maf_filter']
 N = config['N']
 IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
+
 GTF_IN = config['anno_file'].replace('.gtf', '')
+GMT_IN = config['gmt_data'].replace('.gmt', '')
+PATH_FILE = config['pathways']
+K = config['K']
+k = config['k']
 
 splitted_pattern = os.path.join(DATA_DIR, "{file}_filt_sim.bed")
 
@@ -30,7 +35,7 @@ with open(os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.list"), 'w') as f:
 rule all:
     priority: 1000
     input:
-        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.bed")
+        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps.bed")
 
 
 rule filter_vcf:
@@ -108,14 +113,15 @@ rule change_snp_hapgen:
 
 rule make_bed_from_hapgen2:
     input:
-        input_file="{file}_filt_sim_.gen"
+        input_file_="{file}_filt_sim_.gen",
+        input_file="{file}_filt_sim.gen"
     output:
         output_file="{file}_filt_sim.bed"
     priority: 7
     shell:
         f"""
-        rm {{wildcards.file}}_filt_sim.gen
-        mv {{wildcards.file}}_filt_sim_.gen {{wildcards.file}}_filt_sim.gen
+        rm {{input.input_file}}
+        mv {{input.input_file_}} {{input.input_file}}
          plink2 \
          --data {{wildcards.file}}_filt_sim ref-first \
          --make-bed \
@@ -140,10 +146,10 @@ rule merge_chroms:
         
 rule recode_merged:
     input:
-        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
     output:
-        output_file_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"),
-        output_file_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
+        output_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"),
+        output_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
     priority: 9
     shell:
         f"""
@@ -152,14 +158,14 @@ rule recode_merged:
         --out {os.path.join(DATA_DIR, PATTERN)}_filt_sim
         
         # vcf to ucsc's bed (vcf2bed sorts it by default)
-        vcf2bed < {os.path.join(DATA_DIR, PATTERN)}_filt_sim.vcf > {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
+        vcf2bed < {{output.output_vcf}} > {{output.output_bed}}
         
         # some of rows sont include all samples - filter 'em
-        awk -v N={N+10} 'NF==N' {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed > {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed 
+        awk -v N={N+10} 'NF==N' {{output.output_bed}} > {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed 
         
         # rename files
-        rm {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
-        mv {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed
+        rm {{output.output_bed}}
+        mv {os.path.join(DATA_DIR, "")}filtered_{PATTERN}_filt_sim_ucsc.bed {{output.output_bed}}
         """
         
         
@@ -178,18 +184,51 @@ rule transform_gtf:
         
 rule annotate_bed:
     input:
-        input_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_ucsc.bed"),
         input_gtf=os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf")
     output:
-        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.bed")
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno_ucsc.bed")
     priority: 11
     shell:
         f"""
-        bedtools closest -d -a {os.path.join(DATA_DIR, PATTERN)}_filt_sim_ucsc.bed -b {os.path.join(DATA_DIR, GTF_IN)}_filt_sort.gtf  > {os.path.join(DATA_DIR, PATTERN)}_filt_sim_anno.bed
+        bedtools closest -d -a {{input.input_bed}} -b {{input.input_gtf}}  > {{output.output_file}}
         """        
         
+            
         
-        
+rule get_snps_list:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno_ucsc.bed"),
+        input_gmt=os.path.join(DATA_DIR,f"{GMT_IN}.gmt"),
+        input_path=os.path.join(DATA_DIR,f"{PATH_FILE}")
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_chosen_snps.tsv")
+    params:
+        data_dir=DATA_DIR,
+        pattern=PATTERN,
+        K=K,
+        k=k
+    priority: 12
+    shell:
+        f"""
+        ./get_snps_set.py {{params.data_dir}} {{params.pattern}} {{input.input_bed}} {{input.input_gmt}} {{input.input_path}} {{params.K}} {{params.k}}
+        """     
+
+
+rule extract_snps:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
+        input_tsv=os.path.join(DATA_DIR,f"{PATTERN}_chosen_snps.tsv"),
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps.bed")
+    priority: 13
+    shell:
+        f"""
+        plink2 \
+        --bfile {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim")} \
+        --extract range {{input.input_tsv}} \
+        --make-bed --out {os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_snps")}
+        """   
         
         
         
