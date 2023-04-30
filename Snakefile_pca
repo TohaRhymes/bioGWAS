@@ -1,0 +1,142 @@
+import yaml
+import os
+from pathlib import Path
+
+with open('config.yaml') as cf_file:
+    config = yaml.safe_load( cf_file.read() )
+    
+DATA_DIR = config['data_dir']
+IMAGES_DIR = config['images_dir']
+VCFS_LIST = config['vcfs_list']
+MAF_FILTER = config['maf_filter']
+N = config['N']
+IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
+
+
+
+splitted_init_pattern = os.path.join(DATA_DIR, "{file}_filt.bed")
+
+with open(os.path.join(DATA_DIR, VCFS_LIST)) as f:
+    file_chrom = [line.strip().split(',') for line in f]
+    file2chrom = {k:v for k, v in file_chrom}
+    files = list(file2chrom.keys())
+    
+def get_chrom(wildcards):
+    return file2chrom[os.path.basename(wildcards.file)]
+    
+PATTERN = f"{VCFS_LIST}".replace('.list', '')
+
+    
+with open(os.path.join(DATA_DIR, f"{PATTERN}_filt.list"), 'w') as f:
+    f.write('\n'.join(map(lambda x: f"{os.path.join(DATA_DIR, x)}_filt", files)))
+    
+
+rule all:
+    priority: 1000
+    input:
+        output_pca_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_pca.pdf"),
+        output_pca_indep_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_indep_pca.pdf")
+        
+
+
+rule filter_vcf:
+    input:
+        input_file="{file}.vcf"
+    output:
+        output_file="{file}_filt.vcf"
+    priority: 1
+    shell:
+        f'''plink2 --vcf {{input.input_file}} \
+        --max-alleles 2 \
+        --maf {MAF_FILTER} \
+        --keep {IDS_FILE}  \
+        --recode vcf \
+        --out {{wildcards.file}}_filt'''        
+        
+rule bfile:
+    input:
+        input_file="{file}_filt.vcf"
+    output:
+        output_file="{file}_filt.bed"
+    priority: 3
+    params:
+        data="{file}_filt"
+    shell:
+        f"""plink2 \
+        --max-alleles 2 \
+        --vcf {{input.input_file}} \
+        --make-bed \
+        --set-all-var-ids @:# \
+        --out {{params.data}}"""
+        
+        
+        
+rule merge_init_chroms:
+    input:
+        input_file=expand(splitted_init_pattern, file=files)
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt.bed")
+    priority: 8
+    params:
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt")
+    shell:
+        f"""
+        plink2 \
+        --pmerge-list {{params.data}}.list bfile \
+        --max-alleles 2 \
+        --set-all-var-ids @:# \
+        --make-bed \
+        --multiallelics-already-joined \
+        --out {{params.data}}
+        """   
+        
+                
+rule pca_init:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt.bed")
+    output:
+        pca_val=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenval"),
+        pca_val_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenval"),
+        pca_vec=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenvec"),
+        pca_vec_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenvec")
+    priority: 16
+    params:
+        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt"),
+    shell:
+        f"""
+        ./7_2_calc_indep_snps_and_pca.sh \
+        {{params.bed}}
+        """   
+        
+        
+        
+rule draw_pca_init:
+    input:
+        pca_val=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenval"),
+        pca_val_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenval"),
+        pca_vec=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenvec"),
+        pca_vec_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenvec")
+    output:
+        output_pca_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_pca.pdf"),
+        output_pca_indep_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_indep_pca.pdf")
+    priority: 18
+    params:
+        file=os.path.join(DATA_DIR,f"{PATTERN}_filt"),
+        file_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep"),
+        pdf=os.path.join(IMAGES_DIR,f"{PATTERN}_filt"),
+        pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_indep")
+    shell:
+        f"""
+        ./8_2_draw_pca.py \
+        {{params.file}} \
+        {{params.pdf}}
+        
+        ./8_2_draw_pca.py \
+        {{params.file_indep}} \
+        {{params.pdf_indep}}
+        """  
+        
+        
+        
+        
+        
