@@ -24,6 +24,7 @@ SHARED = config['shared']
 
 
 splitted_pattern = os.path.join(DATA_DIR, "{file}_filt_sim.bed")
+splitted_init_pattern = os.path.join(DATA_DIR, "{file}_filt.bed")
 
 with open(os.path.join(DATA_DIR, VCFS_LIST)) as f:
     file_chrom = [line.strip().split(',') for line in f]
@@ -43,6 +44,8 @@ rule all:
     input:
         output_pca=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_pca.pdf"),
         output_pca_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep_pca.pdf"),
+        output_pca_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_pca.pdf"),
+        output_pca_indep_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_indep_pca.pdf"),
         mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_gwas_mh.pdf"),
         qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_gwas_qq.pdf")
 
@@ -66,11 +69,29 @@ rule ped:
     input:
         input_file="{file}_filt.vcf"
     output:
-        output_file="{file}_filt.haps"
+        output_file_haps="{file}_filt.haps",
+        output_file_leg="{file}_filt.legend",
+        output_file_map="{file}_filt.map"
     priority: 3
+    params:
+        data="{file}_filt"
     shell:
-        f"""plink2 --vcf {{input.input_file}} --export ped  --out {{wildcards.file}}_filt
-        plink2  --vcf {{input.input_file}}  --export hapslegend  --out {{wildcards.file}}_filt"""
+        f"""plink2 --vcf {{input.input_file}} --export ped  --out {{params.data}}
+        plink2  --vcf {{input.input_file}}  --export hapslegend  --out {{params.data}}"""
+        
+        
+rule bfile:
+    input:
+        input_file="{file}_filt.vcf"
+    output:
+        output_file="{file}_filt.bed"
+    priority: 3
+    params:
+        data="{file}_filt"
+    shell:
+        f"""plink2 --vcf {{input.input_file}} --export bfile  --out {{params.data}}"""
+        
+
 
 
 rule hapgen2:
@@ -157,7 +178,24 @@ rule merge_chroms:
         --set-all-var-ids @:# \
         --make-bed \
         --out {{params.data}}
-        """        
+        """    
+        
+rule merge_init_chroms:
+    input:
+        input_file=expand(splitted_init_pattern, file=files)
+    output:
+        output_file=os.path.join(DATA_DIR,f"{PATTERN}_filt.bed")
+    priority: 8
+    params:
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt")
+    shell:
+        f"""
+        plink2 \
+        --pmerge-list {{params.data}}.list bfile \
+        --set-all-var-ids @:# \
+        --make-bed \
+        --out {{params.data}}
+        """   
         
 rule recode_merged:
     input:
@@ -312,6 +350,23 @@ rule pca:
         f"""
         ./7_2_calc_indep_snps_and_pca.sh \
         {{params.bed}}
+        """           
+             
+rule pca_init:
+    input:
+        input_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt.bed")
+    output:
+        pca_val=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenval"),
+        pca_val_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenval"),
+        pca_vec=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenvec"),
+        pca_vec_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenvec")
+    priority: 16
+    params:
+        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt"),
+    shell:
+        f"""
+        ./7_2_calc_indep_snps_and_pca.sh \
+        {{params.bed}}
         """   
         
         
@@ -350,6 +405,32 @@ rule draw_pca:
         file_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep"),
         pdf=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim"),
         pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep")
+    shell:
+        f"""
+        ./8_2_draw_pca.py \
+        {{params.file}} \
+        {{params.pdf}}
+        
+        ./8_2_draw_pca.py \
+        {{params.file_indep}} \
+        {{params.pdf_indep}}
+        """   
+        
+rule draw_pca_init:
+    input:
+        pca_val=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenval"),
+        pca_val_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenval"),
+        pca_vec=os.path.join(DATA_DIR,f"{PATTERN}_filt.eigenvec"),
+        pca_vec_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_indep.eigenvec")
+    output:
+        output_pca_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_pca.pdf"),
+        output_pca_indep_init=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_indep_pca.pdf")
+    priority: 18
+    params:
+        file=os.path.join(DATA_DIR,f"{PATTERN}_sim"),
+        file_indep=os.path.join(DATA_DIR,f"{PATTERN}_sim_indep"),
+        pdf=os.path.join(IMAGES_DIR,f"{PATTERN}_sim"),
+        pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_sim_indep")
     shell:
         f"""
         ./8_2_draw_pca.py \

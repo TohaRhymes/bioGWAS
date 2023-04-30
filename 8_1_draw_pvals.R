@@ -33,6 +33,7 @@ draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8
          file.output = TRUE, verbose = TRUE,
          width = 5, height = 3.5
   )
+  print("Q-Q printed")
   CMplot(table,
          plot.type = "m", col = c("grey40", "grey70"), # chr colors
          highlight = SNPs,
@@ -51,6 +52,7 @@ draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8
          dpi = 500, file.output = TRUE, verbose = TRUE,
          width = 14, height = 5
   )
+  print("MH printed")
 }
 
 
@@ -60,10 +62,18 @@ args = commandArgs(trailingOnly=TRUE)
 colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
 color <- sample(colors, 1)
 
-pheno_name <- args[1]
-file_pval <- args[2]
+pheno_name <- "chr_ph1_gwas"
+file_pval <- "data/chr_ph1_gwas.tsv"
+# pheno_name <- args[1]
+# file_pval <- args[2]
+print(pheno_name)
+print(file_pval)
 
 table <- prepare_snp(file_pval)
+
+zero_flag <- table$pval==0 
+non_zero_min <- min(table[!zero_flag,]$pval, na.rm=TRUE)
+table[zero_flag,]$pval <- non_zero_min
 
 max_pval <- max(-log10(table$pval), na.rm=TRUE)
 max_pval <- ceiling(max_pval)
