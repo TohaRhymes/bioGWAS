@@ -14,11 +14,12 @@ library(PhenotypeSimulator)
 #args[6] <- genvar
 #args[7] <- h2s
 
-#args<-c("/home/achangalidi/ukb_finngen/1000genomes", 
-#	"chr_EUR_sim_snps",
-#	"phenos.tsv",
+
+#args<-c("./", 
+#	"data/chr_filt_sim_snps",
+#	"data/phenos_ph1.tsv",
 #	"5000", 
-#	"20", 
+#	"10", 
 #	"0.5", 
 #	"0.5", 
 #	"0.5")
@@ -33,7 +34,8 @@ N_genes <-as.numeric(args[5])
 genVar <- as.numeric(args[6]) #!!! 
 h2s <- as.numeric(args[7]) # доля от генвар, которую составля.т эффекты моих снипов
 shared <- as.numeric(args[8])
-
+mBeta <- as.numeric(args[9])
+sdBeta <- as.numeric(args[10])
 totalSNPeffect <- genVar*h2s
 noiseVar <- 1 - genVar
 independent <- 1 - shared
@@ -61,7 +63,7 @@ genFixed <-geneticFixedEffects(N = N_samples,
 				P = 1, 
 				X_causal = causalSNPs, 
 				pIndependentGenetic = 1,
-                               pTraitIndependentGenetic = 1, mBeta = 0.25, sdBeta = 0.25)
+                               pTraitIndependentGenetic = 1, mBeta = mBeta, sdBeta = sdBeta)
 
 
 genotypes_sd <-standardiseGenotypes(genotypes$genotypes)

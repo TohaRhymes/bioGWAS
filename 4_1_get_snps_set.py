@@ -35,35 +35,31 @@ def flatten(l):
 data_dir = sys.argv[1]
 # sim pattern
 pattern = sys.argv[2]
+# pheno pattern
+pheno_pattern = sys.argv[3]
 # simulated bed file
-bed_file = sys.argv[3]
+vcf_file = sys.argv[4]
 # ------------------------
 # pathway 2 genes file
-gmt_file = sys.argv[4]
+gmt_file = sys.argv[5]
 # file with selected pathways
-pathways_file = sys.argv[5]
-K = int(sys.argv[6])
-k = int(sys.argv[7])
+pathways_file = sys.argv[6]
+K = int(sys.argv[7])
+k = int(sys.argv[8])
 # ========================
 
 #included in bed file genes
-included_genes_file = os.path.join(data_dir, f'{pattern}_included_genes_snps.gtf')
+included_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_included_genes_snps.gtf')
 # where to save gene causal geneset
-causal_genes_file = os.path.join(data_dir, f'{pattern}_causal_geneset_snps.txt')
+causal_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_causal_geneset_snps.txt')
 # annotated snps from bed
-annotated_snps_file = os.path.join(data_dir, f"{pattern}_annotated_snps.tsv")
+annotated_snps_file = os.path.join(data_dir, f"{pattern}_{pheno_pattern}_annotated_snps.tsv")
 # chosen snps
-selected_snps_file = os.path.join(data_dir, f"{pattern}_chosen_snps.tsv")
+selected_snps_file = os.path.join(data_dir, f"{pattern}_{pheno_pattern}_chosen_snps.tsv")
 
 
 with open(pathways_file) as f:
     pathways = flatten([line.strip().split(',') for line in f])
-
-
-
-bash_command = f"value=$(tail -n 1 {bed_file} | awk '{{print NF}}') ; col=$(echo $value-4 | bc) ; cut -f $col {bed_file} | sort | uniq > {included_genes_file}"
-process = subprocess.Popen(bash_command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
-output, error = process.communicate()
 
 
 included_genes = pd.read_csv(included_genes_file, sep='\t', names=['gene'], header=None)
@@ -88,8 +84,8 @@ other_genes = set(flatten(path2genes.values())) & included_genes
 other_genes = list(other_genes-target_genes)
 target_genes = list(target_genes)
 
-target_genes = random.choices(target_genes, k=k)
-other_genes = random.choices(other_genes, k=K-k)
+target_genes = random.sample(target_genes, k=k)
+other_genes = random.sample(other_genes, k=K-k)
 print(f'Chosen target genes: {target_genes}')
 print(f'Chosen other genes: {other_genes}')
 gene_set = target_genes+other_genes
@@ -102,7 +98,7 @@ with open(causal_genes_file, 'w') as f:
     
     
 # chose this specific genes in file
-bash_command = f"value=$(tail -n 1 {bed_file} | awk '{{print NF}}') ; col=$(echo $value-4 | bc) ; grep -w -f <(cut -f 1 {causal_genes_file}) {bed_file} | cut -f 1,2,3,$col > {annotated_snps_file}"
+bash_command = f"value=$(tail -n 1 {vcf_file} | awk '{{print NF}}') ; col=$(echo $value-3 | bc) ; grep -w -f <(cut -f 1 {causal_genes_file}) {vcf_file} | cut -f 1,2,4,$col > {annotated_snps_file}"
 process = subprocess.Popen(bash_command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
 output, error = process.communicate()
 
@@ -111,6 +107,7 @@ output, error = process.communicate()
 snps = pd.read_csv(annotated_snps_file, sep='\t', names=['chr', 's', 'e', 'gene'], header=None)
 snps.gene = snps.gene.apply(lambda x: extract_substrings(x))
 snps = snps.groupby('gene').apply(lambda x: choose_random_row(x)).reset_index(drop=True)
-snps.s = snps.e
+snps.e = snps.s+snps.e.apply(lambda x: len(x)-1)
+snps = snps.sort_values(['chr', 's'])
 snps.to_csv(selected_snps_file, header=False, index=False, sep='\t')
 print(f'Succesfully saved to {selected_snps_file}')

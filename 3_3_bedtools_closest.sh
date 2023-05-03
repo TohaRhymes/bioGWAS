@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
 
-DATA_DIR=$1
-PATTERN=$2
-GTF_IN=$3
+$INPUT_VCF=$1
+$INPUT_GTF=$2
+$OUTPUT_VCF=$3
+$OUTPUT_GTF=$4
 
-cd ${DATA_DIR}
+bedtools closest -a ${INPUT_VCF} -b ${INPUT_GTF}  > ${OUTPUT_VCF}
 
-bedtools closest -d -a filtered_${PATTERN}_FILT_sim_ucsc.bed -b gen_$2.sorted.gtf  > ${PATTERN}_FILT_sim.sorted.annotated.bed
+value=$(tail -n 1 ${OUTPUT_VCF} | awk '{print NF}')
+col=$(echo $value-3 | bc)
+cut -f $col ${OUTPUT_VCF} | uniq > ${OUTPUT_GTF}

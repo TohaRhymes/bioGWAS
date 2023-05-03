@@ -86,7 +86,6 @@ rule merge_init_chroms:
         --max-alleles 2 \
         --set-all-var-ids @:# \
         --make-bed \
-        --multiallelics-already-joined \
         --out {{params.data}}
         """   
         
