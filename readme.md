@@ -39,7 +39,7 @@ Data:
     * --export ped + --export hapslegend
 * Run hapgen to make samplings: `./1_3_script_hapgen.sh ./data chr 5000`
 * Correct files: `./1_4_script_rename_hap.sh ./data chr > 1_4_script_rename_hap.log`
-### 2. Merge this data
+#### 2. Merge this data
 Merged all bfiles to one and made vcf & ucsc’s bed.
 These 2 steps in one script: `./2_1_script_make_sim_bfile.sh ./data chr 5010 > 2_1_script_make_sim_bfile.log`
 
@@ -73,8 +73,8 @@ Script with PCA:
 #### 8. Draw GWAS and PCA
 
 Draw:
-* `./draw_pvals.R chr_EUR_sim_p1 chr_EUR_sim_p1.tsv` -- Q-Q plot and Manhattan plot;
-* `./draw_pca.py chr_EUR_sim` -- PCA plots for full set of SNPS;
-* `./draw_pca.py chr_EUR_sim_indep` -- PCA plots for independent set of SNPS.
+* `./8_1_draw_pvals.R chr_EUR_sim_p1 data/chr_EUR_sim_p1.tsv` -- Q-Q plot and Manhattan plot;
+* `./8_2_draw_pca.py data/chr_EUR_sim images/` -- PCA plots for full set of SNPS;
+* `./8_2_draw_pca.py data/chr_EUR_sim_indep images/` -- PCA plots for independent set of SNPS.
 
 
