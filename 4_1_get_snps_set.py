@@ -49,7 +49,7 @@ k = int(sys.argv[8])
 # ========================
 
 #included in bed file genes
-included_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_included_genes_snps.gtf')
+included_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_included_genes_snps.txt')
 # where to save gene causal geneset
 causal_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_causal_geneset_snps.txt')
 # annotated snps from bed
@@ -92,7 +92,7 @@ gene_set = target_genes+other_genes
 
 with open(causal_genes_file, 'w') as f:
     for x in gene_set[:-1]:
-        f.write(f"{x}\n")
+        f.write(f"\"{x}\"\n")
     f.write(f"{gene_set[-1]}")
 
     

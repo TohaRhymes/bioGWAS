@@ -48,7 +48,7 @@ rule all:
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
         filt_anno_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        included_gtf = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.gtf'),
+        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
         phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_phenos.tsv"),
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas.tsv"),
         output_pca=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_pca.pdf"),
@@ -232,11 +232,11 @@ rule annotate_vcf:
         gtf=os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf")
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        included_gtf = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.gtf'),
+        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
     priority: 11
     shell:
         f"""
-        ./3_3_bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_gtf}}
+        ./3_3_bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
         """        
         
             
@@ -246,7 +246,7 @@ rule get_snps_list:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
         gmt=os.path.join(DATA_DIR,f"{GMT_IN}.gmt"),
         path=os.path.join(DATA_DIR,f"{PATH_FILE}"),
-        included_gtf = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.gtf'),
+        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
     output:
         causal_genes = temp(os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_causal_geneset_snps.txt')),
         annotated_snps = temp(os.path.join(DATA_DIR, f"{PATTERN}_{PHENOS_ID}_annotated_snps.tsv")),
