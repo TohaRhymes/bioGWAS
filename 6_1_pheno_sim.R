@@ -48,7 +48,12 @@ total <- independent * noiseVar + shared * noiseVar +
   shared * h2s *genVar + independent * h2s * genVar +
   shared * (1-h2s) * genVar + independent * (1-h2s) * genVar
 
-stopifnot(total == 1)
+
+print("KEK")
+print(total)
+print(abs(total-1) < 0.00001)
+print("LOL")
+stopifnot(abs(total-1) < 0.00001)
 
 
 
@@ -63,26 +68,36 @@ genFixed <-geneticFixedEffects(N = N_samples,
 				P = 1, 
 				X_causal = causalSNPs, 
 				pIndependentGenetic = 1,
-                               pTraitIndependentGenetic = 1, mBeta = mBeta, sdBeta = sdBeta)
+                pTraitIndependentGenetic = 1, 
+                mBeta = mBeta, 
+                sdBeta = sdBeta)
 
 
 genotypes_sd <-standardiseGenotypes(genotypes$genotypes)
-kinship <- getKinship(N=N_samples, X=genotypes_sd, verbose = FALSE)
+kinship <- getKinship(N=N_samples, 
+                      X=genotypes_sd, 
+                      verbose = FALSE)
 
-genBg <-geneticBgEffects(N=N_samples, kinship = kinship, P = 1)
+genBg <-geneticBgEffects(N=N_samples, 
+                         kinship = kinship, 
+                         P = 1)
 
-noiseBg <- noiseBgEffects(N=N_samples, P=1)
+noiseBg <- noiseBgEffects(N=N_samples, 
+                          P=1)
 
 
-genFixed_shared_scaled <- rescaleVariance(genFixed$shared, shared * h2s * genVar)
+genFixed_shared_scaled <- rescaleVariance(genFixed$shared, 
+                                          shared * h2s * genVar)
 genFixed_independent_scaled <- rescaleVariance(genFixed$independent, 
                                                independent * h2s * genVar)
 
-genBg_shared_scaled <- rescaleVariance(genBg$shared, shared * (1-h2s) * genVar)
+genBg_shared_scaled <- rescaleVariance(genBg$shared, 
+                                       shared * (1-h2s) * genVar)
 genBg_independent_scaled <- rescaleVariance(genBg$independent, 
                                             independent * (1-h2s) * genVar)
 
-noiseBg_shared_scaled <- rescaleVariance(noiseBg$shared, shared * noiseVar)
+noiseBg_shared_scaled <- rescaleVariance(noiseBg$shared, 
+                                         shared * noiseVar)
 noiseBg_independent_scaled <- rescaleVariance(noiseBg$independent,
                                               independent *noiseVar)
 

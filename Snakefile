@@ -1,28 +1,36 @@
 import yaml
 import os
 from pathlib import Path
+from distutils.util import strtobool
 
-with open('config.yaml') as cf_file:
-    config = yaml.safe_load( cf_file.read() )
+
+
+configfile: "config.yaml"
     
 DATA_DIR = config['data_dir']
 IMAGES_DIR = config['images_dir']
 VCFS_LIST = config['vcfs_list']
-MAF_FILTER = config['maf_filter']
-N = config['N']
 IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
-
 GTF_IN = config['anno_file'].replace('.gtf', '')
 GMT_IN = config['gmt_data'].replace('.gmt', '')
 PATH_FILE = config['pathways']
+
+MAF_FILTER = config['maf_filter']
+N = config['N']
+
 PHENOS_ID = config['phenos_id']
+SIM_ID = config['sim_id']
+
 K = config['K']
 k = config['k']
 GEN_VAR = config['gen_var']
 H2S = config['h2s']
 SHARED = config['shared']
-SDBETA = config['sdBeta']
-MBETA = config['mBeta']
+SD_BETA = config['sd_beta']
+M_BETA = config['m_beta']
+DRAW_FLAG = bool(strtobool(str(config['draw_flag'])))
+
+print(DRAW_FLAG, GEN_VAR, SIM_ID, config['sim_id'], config['draw_flag'], DRAW_FLAG)
 
 
 with open(os.path.join(DATA_DIR, VCFS_LIST)) as f:
@@ -37,6 +45,19 @@ PATTERN = f"{VCFS_LIST}".replace('.list', '')
     
 with open(os.path.join(DATA_DIR, f"{PATTERN}_filt_sim.list"), 'w') as f:
     f.write('\n'.join(map(lambda x: f"{os.path.join(DATA_DIR, x)}_filt_sim", files)))
+    
+    
+draw_output = list()
+
+if DRAW_FLAG:
+    output_pca=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_pca.pdf")
+    output_pca_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep_pca.pdf")
+    mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas_mh.pdf")
+    qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas_qq.pdf")
+    draw_output.append(output_pca)
+    draw_output.append(output_pca_indep)
+    draw_output.append(mh)
+    draw_output.append(qq)
 
 rule all:
     priority: 1000
@@ -49,12 +70,9 @@ rule all:
         filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
         filt_anno_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
-        phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_phenos.tsv"),
-        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas.tsv"),
-        output_pca=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_pca.pdf"),
-        output_pca_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep_pca.pdf"),
-        mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_gwas_mh.pdf"),
-        qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_gwas_qq.pdf"),
+        phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_phenos.tsv"),
+        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas.tsv"),
+        draw_output = draw_output
         
 
 
@@ -295,7 +313,7 @@ rule pheno_sim:
         bim=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_filt_sim_snps.bim"),
         fam=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_filt_sim_snps.fam")
     output:
-        tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_phenos.tsv")
+        tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_phenos.tsv")
     params:
         data_dir=DATA_DIR,
         K=K,
@@ -304,8 +322,8 @@ rule pheno_sim:
         GEN_VAR=GEN_VAR,
         H2S=H2S,
         SHARED=SHARED,
-        MBETA=MBETA,
-        SDBETA=SDBETA,
+        M_BETA=M_BETA,
+        SD_BETA=SD_BETA,
     priority: 14
     shell:
         f"""
@@ -318,8 +336,8 @@ rule pheno_sim:
         {{GEN_VAR}} \
         {{H2S}} \
         {{SHARED}}\
-        {{MBETA}} \
-        {{SDBETA}}
+        {{M_BETA}} \
+        {{SD_BETA}}
         """   
         
 # todo make custom gwas        
@@ -328,14 +346,14 @@ rule gwas:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
         bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
-        pheno=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_phenos.tsv"),
+        pheno=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_phenos.tsv"),
     output:
-        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas.tsv")
+        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas.tsv")
     priority: 15
     params:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
-        pheno=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_phenos"),
-        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas")
+        pheno=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_phenos"),
+        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas")
     shell:
         f"""
         ./7_1_gwas_analysis.sh \
@@ -368,13 +386,13 @@ rule pca:
              
 rule draw_gwas:
     input:
-        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_gwas.tsv")
+        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas.tsv")
     output:
-        mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_gwas_mh.pdf"),
-        qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_gwas_qq.pdf")
+        mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas_mh.pdf"),
+        qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas_qq.pdf")
     priority: 17
     params:
-        name=f"{PATTERN}_{PHENOS_ID}_gwas"
+        name=f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas"
     shell:
         f"""
         ./8_1_draw_pvals.R \

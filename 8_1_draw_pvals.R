@@ -30,6 +30,9 @@ prepare_snp <- function(FILE) {
 }
 
 get_markers <- function(mutations, CUT_OFF, WINDOW) {
+  if (sum(mutations$pval<=CUT_OFF, na.rm=TRUE)==0){
+    return(c())
+  }
   t_mutations <- mutations[mutations$pval<=CUT_OFF & !is.na(mutations$pval),]
   t_mutations$index <- rownames(t_mutations)
   rownames(t_mutations) <- 1:nrow(t_mutations)
@@ -79,8 +82,9 @@ get_markers <- function(mutations, CUT_OFF, WINDOW) {
   
   flag <- rownames(mutations) %in% index_to_take
   print('')
-  return(flag)
+  return(mutations[flag,]$snp)
 }
+
 
 draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
   print("Q-Q printing...")
@@ -120,15 +124,19 @@ args = commandArgs(trailingOnly=TRUE)
 colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
 color <- sample(colors, 1)
 
-# pheno_name <- "chr_ph1_gwas"
-# file_pval <- "data/chr_ph1_gwas.tsv"
 pheno_name <- args[1]
 file_pval <- args[2]
+
+# pheno_name <- "chr_ph_sperm_m0.01_sd0.001_gv0.05_h2s0.5_gwas"
+# file_pval <- "data/chr_ph_sperm_m0.01_sd0.001_gv0.05_h2s0.5_gwas.tsv"
+        
 print(pheno_name)
 print(file_pval)
 
 table <- prepare_snp(file_pval)
 
+# There are some times pvals = 0 => -log10(pval) = inf. 
+# We make these pvals equal to min pval that are not 0 (~e-200 -- e-300) 
 zero_flag <- table$pval==0 
 if (sum(zero_flag, na.rm=TRUE)>0){
   non_zero_min <- min(table[!zero_flag,]$pval, na.rm=TRUE)
@@ -139,9 +147,32 @@ max_pval <- max(-log10(table$pval), na.rm=TRUE)
 max_pval <- ceiling(max_pval)
 cutoff <-  0.05/nrow(table)
 
-SNPs <- table[get_markers(table, cutoff, 500000), 1]
 
-draw_mhplot_qq(table,
+
+print('getting markers...')
+# getting array of boolean: markers to sign:
+# loci interval (only one SNP with max pval will be signed)
+WINDOW <- 500000
+# maximum SNPs to sign (per chr)
+N_MARKERS <- 7
+# p-value cut off for significant SNPs
+CUT_OFF <- cutoff
+
+SNPs <- c()
+for (chr in unique(table$chr)){
+  cur_window <- WINDOW
+  flag <- table$chr == chr
+  markers <- get_markers(table[flag,], CUT_OFF, cur_window)
+  while(length(markers) > N_MARKERS){
+    cur_window <- 2 * cur_window
+    markers <- get_markers(table[flag,], CUT_OFF, cur_window)
+  }
+  SNPs <- c(SNPs, markers)
+}
+print('Markers got')
+print('Evth done for drawing!')
+
+draw_mhplot_qq(table[,c('snp', 'chr', 'pos', 'pval')],
            pheno_name,
            "pdf",
            color,
