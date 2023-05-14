@@ -21,7 +21,13 @@ sd_betas = (
     (0.01, 0.05, 0.01),
     (0.01, 0.1, 0.3),
 )
-# missed: 0.1 0.05 0.5 0.5
+
+Ks = [
+#     10, 
+#     30, 
+    50
+]
+
 assert len(m_betas) == len(sd_betas)
 # make products
 m_sd_comb = []
@@ -43,17 +49,31 @@ params = [
 ]
 pprint(params)
 
-for param in params:
-    m_beta = param["m_beta"]
-    sd_beta = param["sd_beta"]
-    gen_var = param["gen_var"]
-    h2s = param["h2s"]
-    sim_id = f"m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}"
-    command = f"snakemake --cores 8 --config m_beta={m_beta} sd_beta={sd_beta}  gen_var={gen_var} h2s={h2s} draw_flag={True} sim_id={sim_id}"
-    print(command)
-    process = subprocess.Popen(
-        command, stdout=subprocess.PIPE, shell=True, executable="/bin/bash"
-    )
-    output, error = process.communicate()
-    print("\n=============================\nOUTPUT: \n", output)
-    print("\n=============================\nERRORS: \n", error)
+for K in Ks:
+    k = K // 2
+    for param in params:
+        m_beta = param["m_beta"]
+        sd_beta = param["sd_beta"]
+        gen_var = param["gen_var"]
+        h2s = param["h2s"]
+        sim_id = f"m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}"
+        phenos_id = f"ph_sperm_K{K}"
+        command = f"snakemake \
+        --cores 8 \
+        --config \
+        m_beta={m_beta} \
+        sd_beta={sd_beta} \
+        gen_var={gen_var} \
+        h2s={h2s} \
+        K={K} \
+        k={k} \
+        draw_flag={True} \
+        sim_id={sim_id} \
+        phenos_id={phenos_id}"
+        print(command)
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, shell=True, executable="/bin/bash"
+        )
+        output, error = process.communicate()
+        print("\n=============================\nOUTPUT: \n", output)
+        print("\n=============================\nERRORS: \n", error)

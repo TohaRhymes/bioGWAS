@@ -69,7 +69,7 @@ rule all:
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
         filt_anno_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
+        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_included_genes_snps.txt'),
         phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_phenos.tsv"),
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas.tsv"),
         draw_output = draw_output
@@ -250,7 +250,7 @@ rule annotate_vcf:
         gtf=os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf")
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
+        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_included_genes_snps.txt'),
     priority: 11
     shell:
         f"""
@@ -264,7 +264,7 @@ rule get_snps_list:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
         gmt=os.path.join(DATA_DIR,f"{GMT_IN}.gmt"),
         path=os.path.join(DATA_DIR,f"{PATH_FILE}"),
-        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_included_genes_snps.txt'),
+        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_included_genes_snps.txt'),
     output:
         causal_genes = temp(os.path.join(DATA_DIR, f'{PATTERN}_{PHENOS_ID}_causal_geneset_snps.txt')),
         annotated_snps = temp(os.path.join(DATA_DIR, f"{PATTERN}_{PHENOS_ID}_annotated_snps.tsv")),
