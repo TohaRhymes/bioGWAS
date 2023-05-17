@@ -17,9 +17,19 @@ sd_betas = (
     (0.001, 0.005),
     (0.001, 0.01),
     (0.001, 0.01, 0.05),
-    (0.01, 0.05, 0.01),
-    (0.01, 0.05, 0.01),
+    (0.01, 0.05, 0.1),
+    (0.01, 0.05, 0.1),
     (0.01, 0.1, 0.3),
+)
+
+# try these m_betas
+m_betas = (
+    0.2, 
+    0.3)
+# use these sd for m_betas above respectively
+sd_betas = (
+    (0.1,),
+    (0.1,)
 )
 
 Ks = [
@@ -77,3 +87,5 @@ for K in Ks:
         output, error = process.communicate()
         print("\n=============================\nOUTPUT: \n", output)
         print("\n=============================\nERRORS: \n", error)
+        
+print('Done with params iterations')

@@ -134,7 +134,8 @@ rule hapgen2:
         -int 0 500000000 \
         -n {N} 0 \
         -Ne 11418 \
-        -theta 1"""
+        -theta 1
+        """
         
 
 
