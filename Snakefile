@@ -240,7 +240,7 @@ rule transform_gtf:
         gtf_in=GTF_IN,
     shell:
         f"""
-        ./3_2_script_make_gtf.sh {{params.data_dir}} {{params.gtf_in}}
+        ./script_make_gtf.sh {{params.data_dir}} {{params.gtf_in}}
         """
         
         
@@ -255,7 +255,7 @@ rule annotate_vcf:
     priority: 11
     shell:
         f"""
-        ./3_3_bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
+        ./bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
         """        
         
             
@@ -279,7 +279,7 @@ rule get_snps_list:
     priority: 12
     shell:
         f"""
-        ./4_1_get_snps_set.py {{params.data_dir}} {{params.pattern}} {{params.pheno_pattern}} {{input.vcf}} {{input.gmt}} {{input.path}} {{params.K}} {{params.k}}
+        ./get_snps_set.py {{params.data_dir}} {{params.pattern}} {{params.pheno_pattern}} {{input.vcf}} {{input.gmt}} {{input.path}} {{params.K}} {{params.k}}
         """     
 
 
@@ -328,7 +328,7 @@ rule pheno_sim:
     priority: 14
     shell:
         f"""
-        ./6_1_pheno_sim.R \
+        ./pheno_sim.R \
         ./ \
         {{params.data}} \
         {{output.tsv}} \
@@ -357,7 +357,7 @@ rule gwas:
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas")
     shell:
         f"""
-        ./7_1_gwas_analysis.sh \
+        ./gwas_analysis.sh \
         {{params.bed}} \
         {{params.pheno}} \
         {{params.gwas}}
@@ -379,7 +379,7 @@ rule pca:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
     shell:
         f"""
-        ./7_2_calc_indep_snps_and_pca.sh \
+        ./calc_indep_snps_and_pca.sh \
         {{params.bed}}
         """           
      
@@ -396,7 +396,7 @@ rule draw_gwas:
         name=f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas"
     shell:
         f"""
-        ./8_1_draw_pvals.R \
+        ./draw_pvals.R \
         {{params.name}} \
         {{input.gwas}} 
    
@@ -421,11 +421,11 @@ rule draw_pca:
         pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep")
     shell:
         f"""
-        ./8_2_draw_pca.py \
+        ./draw_pca.py \
         {{params.file}} \
         {{params.pdf}}
         
-        ./8_2_draw_pca.py \
+        ./draw_pca.py \
         {{params.file_indep}} \
         {{params.pdf_indep}}
         """   

@@ -103,7 +103,7 @@ rule pca_init:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt"),
     shell:
         f"""
-        ./7_2_calc_indep_snps_and_pca.sh \
+        ./calc_indep_snps_and_pca.sh \
         {{params.bed}}
         """   
         
@@ -126,11 +126,11 @@ rule draw_pca_init:
         pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_indep")
     shell:
         f"""
-        ./8_2_draw_pca.py \
+        ./draw_pca.py \
         {{params.file}} \
         {{params.pdf}}
         
-        ./8_2_draw_pca.py \
+        ./draw_pca.py \
         {{params.file_indep}} \
         {{params.pdf_indep}}
         """  
