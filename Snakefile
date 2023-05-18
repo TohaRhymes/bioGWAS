@@ -240,7 +240,7 @@ rule transform_gtf:
         gtf_in=GTF_IN,
     shell:
         f"""
-        ./script_make_gtf.sh {{params.data_dir}} {{params.gtf_in}}
+        ./pipeline_utils/script_make_gtf.sh {{params.data_dir}} {{params.gtf_in}}
         """
         
         
@@ -255,7 +255,7 @@ rule annotate_vcf:
     priority: 11
     shell:
         f"""
-        ./bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
+        ./pipeline_utils/bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
         """        
         
             
@@ -279,7 +279,7 @@ rule get_snps_list:
     priority: 12
     shell:
         f"""
-        ./get_snps_set.py {{params.data_dir}} {{params.pattern}} {{params.pheno_pattern}} {{input.vcf}} {{input.gmt}} {{input.path}} {{params.K}} {{params.k}}
+        ./pipeline_utils/get_snps_set.py {{params.data_dir}} {{params.pattern}} {{params.pheno_pattern}} {{input.vcf}} {{input.gmt}} {{input.path}} {{params.K}} {{params.k}}
         """     
 
 
@@ -328,7 +328,7 @@ rule pheno_sim:
     priority: 14
     shell:
         f"""
-        ./pheno_sim.R \
+        ./pipeline_utils/pheno_sim.R \
         ./ \
         {{params.data}} \
         {{output.tsv}} \
@@ -357,7 +357,7 @@ rule gwas:
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas")
     shell:
         f"""
-        ./gwas_analysis.sh \
+        ./pipeline_utils/gwas_analysis.sh \
         {{params.bed}} \
         {{params.pheno}} \
         {{params.gwas}}
@@ -379,7 +379,7 @@ rule pca:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
     shell:
         f"""
-        ./calc_indep_snps_and_pca.sh \
+        ./pipeline_utils/calc_indep_snps_and_pca.sh \
         {{params.bed}}
         """           
      
@@ -396,7 +396,7 @@ rule draw_gwas:
         name=f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_gwas"
     shell:
         f"""
-        ./draw_pvals.R \
+        ./pipeline_utils/draw_pvals.R \
         {{params.name}} \
         {{input.gwas}} 
    
@@ -421,11 +421,11 @@ rule draw_pca:
         pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep")
     shell:
         f"""
-        ./draw_pca.py \
+        ./pipeline_utils/draw_pca.py \
         {{params.file}} \
         {{params.pdf}}
         
-        ./draw_pca.py \
+        ./pipeline_utils/draw_pca.py \
         {{params.file_indep}} \
         {{params.pdf_indep}}
         """   
