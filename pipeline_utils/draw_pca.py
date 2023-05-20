@@ -21,11 +21,11 @@ def draw_PCA(FILE_PREFIX, IMAGES_PREFIX):
     ev = ev/ev.sum()*100
     print(f"Dispersion: {ev}")
 
-    sns.set(rc={'figure.figsize':(18,5)})
+    plt.figure(figsize=(18,5))
 
     fig, axs = plt.subplots(nrows=1, ncols=3)
     for i in range(1,4,1):
-        ax = sns.scatterplot(data[f'PC{i}'], data[f'PC{i+1}'], ax=axs[i-1])
+        ax = sns.scatterplot(data, x=f'PC{i}', y=f'PC{i+1}', ax=axs[i-1])
         ax.set(xlabel=f'PC{i}, {round(ev[i-1], 2)}%', 
                ylabel=f'PC{i+1}, {round(ev[i], 2)}%')
     plt.savefig(TO)

@@ -49,10 +49,7 @@ total <- independent * noiseVar + shared * noiseVar +
   shared * (1-h2s) * genVar + independent * (1-h2s) * genVar
 
 
-print("KEK")
-print(total)
 print(abs(total-1) < 0.00001)
-print("LOL")
 stopifnot(abs(total-1) < 0.00001)
 
 

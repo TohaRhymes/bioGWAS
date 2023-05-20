@@ -96,14 +96,14 @@ with open(causal_genes_file, 'w') as f:
     f.write(f"{gene_set[-1]}")
 
     
-    
+print("Chosing these specific genes in file...")
 # chose this specific genes in file
 bash_command = f"value=$(tail -n 1 {vcf_file} | awk '{{print NF}}') ; col=$(echo $value-3 | bc) ; grep -w -f <(cut -f 1 {causal_genes_file}) {vcf_file} | cut -f 1,2,4,$col > {annotated_snps_file}"
+print(bash_command)
 process = subprocess.Popen(bash_command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
 output, error = process.communicate()
 
-
-
+print("Finishing")
 snps = pd.read_csv(annotated_snps_file, sep='\t', names=['chr', 's', 'e', 'gene'], header=None)
 snps.gene = snps.gene.apply(lambda x: extract_substrings(x))
 snps = snps.groupby('gene').apply(lambda x: choose_random_row(x)).reset_index(drop=True)

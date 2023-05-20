@@ -430,12 +430,3 @@ rule draw_pca:
         {{params.pdf_indep}}
         """   
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
