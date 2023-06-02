@@ -42,4 +42,4 @@ Results are stored in:
 ### LSEA launching
 
 * `iterate_lsea.py` -- script for launching LSEA a lot of times to validate results.
-* `results_1_check_best_parameters.ipynb` -- visualization of the results of validating LSEA.
+* `results_2_check_LSEA.ipynb` -- visualization of the results of validating LSEA.
