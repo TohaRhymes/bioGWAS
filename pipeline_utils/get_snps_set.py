@@ -14,9 +14,11 @@ def extract_substrings(input_string):
     matches = re.findall(r'\"\"(.+?)\"\"', input_string)
     return '_'.join(matches)
 
-
 def extract_second(input_string):
-    return input_string.split('_')[1]
+    try:
+        return input_string.split('_')[1]
+    except IndexError:
+        return pd.NA
 
 def choose_random_row(group_df):
     random_idx = np.random.choice(group_df.index)
@@ -64,6 +66,7 @@ with open(pathways_file) as f:
 
 included_genes = pd.read_csv(included_genes_file, sep='\t', names=['gene'], header=None)
 included_genes.gene = included_genes.gene.apply(lambda x: extract_second(extract_substrings(x)))
+included_genes = included_genes[~included_genes.gene.isna()]
 included_genes = set(included_genes.gene.unique())
 
 
@@ -86,9 +89,17 @@ target_genes = list(target_genes)
 
 target_genes = random.sample(target_genes, k=k)
 other_genes = random.sample(other_genes, k=K-k)
+gene_set = target_genes+other_genes
+print('Genes were chose!')
+
+while len(gene_set) != K:
+    target_genes = random.sample(target_genes, k=k)
+    other_genes = random.sample(other_genes, k=K-k)
+    gene_set = target_genes+other_genes
+
+    
 print(f'Chosen target genes: {target_genes}')
 print(f'Chosen other genes: {other_genes}')
-gene_set = target_genes+other_genes
 
 with open(causal_genes_file, 'w') as f:
     for x in gene_set[:-1]:

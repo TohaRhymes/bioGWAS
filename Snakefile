@@ -14,8 +14,15 @@ IDS_FILE = os.path.join(DATA_DIR, config['ids_file'])
 GTF_IN = config['anno_file'].replace('.gtf', '')
 GMT_IN = config['gmt_data'].replace('.gmt', '')
 PATH_FILE = config['pathways']
+SNPS_FILE = config['snps']
+SNPS_PROVIDED = config['snps_provided'] 
+
 
 MAF_FILTER = config['maf_filter']
+# defaults are [0.0,1.0]
+CAUSAL_MAF_MIN = config['causal_maf_min'] 
+CAUSAL_MAF_MAX = config['causal_maf_max']
+
 N = config['N']
 
 PHENOS_ID = config['phenos_id']
@@ -65,9 +72,9 @@ rule all:
         filt_bed=expand(os.path.join(DATA_DIR, "{file}_filt.bed"), file=files),
         filt_bim=expand(os.path.join(DATA_DIR, "{file}_filt.bim"), file=files),
         filt_fam=expand(os.path.join(DATA_DIR, "{file}_filt.fam"), file=files),
-        filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
-        filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
-        filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
+        filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_full.bed"),
+        filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_full.bim"),
+        filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_full.fam"),
         filt_anno_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_included_genes_snps.txt'),
         phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_{SIM_ID}_phenos.tsv"),
@@ -80,7 +87,7 @@ rule filter_vcf:
     input:
         vcf="{file}.vcf"
     output:
-        vcf=temp("{file}_filt.vcf")
+        vcf="{file}_filt.vcf"
     priority: 1
     shell:
         f'''plink2 --vcf {{input.vcf}} \
@@ -95,10 +102,10 @@ rule haps_legend_map_bfile:
     input:
         filt_vcf="{file}_filt.vcf"
     output:
-        filt_haps=temp("{file}_filt.haps"),
-        filt_leg=temp("{file}_filt.legend"),
-        filt_map=temp("{file}_filt.map"),
-        filt_ped=temp("{file}_filt.ped"),
+        filt_haps="{file}_filt.haps",
+        filt_leg="{file}_filt.legend",
+        filt_map="{file}_filt.map",
+        filt_ped="{file}_filt.ped",
         filt_bed="{file}_filt.bed",
         filt_bim="{file}_filt.bim",
         filt_fam="{file}_filt.fam"
@@ -119,7 +126,10 @@ rule hapgen2:
         filt_map="{file}_filt.map",
         filt_vcf="{file}_filt.vcf",
     output:
-        controls_gen="{file}_filt_sim.controls.gen"
+        controls_gen="{file}_filt_sim.controls.gen",
+        controls_haps="{file}_filt_sim.controls.haps",
+        controls_gsample="{file}_filt_sim.controls.sample",
+        filt_sim_legend=temp("{file}_filt_sim.legend"),
     params:
         data="{file}_filt"
     priority: 4
@@ -141,12 +151,13 @@ rule hapgen2:
 
 rule postprocess_hapgen2:
     input:
-        controls_gen="{file}_filt_sim.controls.gen"
+        controls_gen="{file}_filt_sim.controls.gen",
+        controls_haps="{file}_filt_sim.controls.haps",
+        controls_gsample="{file}_filt_sim.controls.sample",
     output:
-        filt_sim_gen=temp("{file}_filt_sim.gen"),
-        filt_sim_sample=temp("{file}_filt_sim.sample"),
-        filt_sim_haps=temp("{file}_filt_sim.haps"),
-        filt_sim_legend=temp("{file}_filt_sim.legend"),
+        filt_sim_gen="{file}_filt_sim.gen",
+        filt_sim_sample="{file}_filt_sim.sample",
+        filt_sim_haps="{file}_filt_sim.haps",
     priority: 5
     params:
         data="{file}_filt_sim"
@@ -159,32 +170,35 @@ rule postprocess_hapgen2:
 
 rule change_snp_hapgen:
     input:
-        filt_sim_gen="{file}_filt_sim.gen"
+        filt_sim_gen="{file}_filt_sim.gen",
+        filt_sim_sample="{file}_filt_sim.sample"
     output:
-        filt_sim_gen_="{file}_filt_sim_.gen"
+        filt_sim_gen_="{file}_filt_sim_.gen",
+        filt_sim_sample_="{file}_filt_sim_.sample"
     priority: 6
     params:
         get_chrom = get_chrom
-    run:         
-        shell(f"""sed s/"snp_"/"{{params.get_chrom}} snp{{params.get_chrom}}_"/g {{input.filt_sim_gen}} > {{output.filt_sim_gen_}}""")
+    shell:
+        f"""
+        sed s/"snp_"/"{{params.get_chrom}} snp{{params.get_chrom}}_"/g {{input.filt_sim_gen}} > {{output.filt_sim_gen_}}
+        mv {{input.filt_sim_sample}} {{output.filt_sim_sample_}}
+        """
 
 
 rule make_bed_from_hapgen2:
     input:
         filt_sim_gen_="{file}_filt_sim_.gen",
-        filt_sim_gen="{file}_filt_sim.gen",
-        filt_sim_sample="{file}_filt_sim.sample"
+        filt_sim_sample_="{file}_filt_sim_.sample"
     output:
         filt_sim_bed="{file}_filt_sim.bed"
     params:
+        data_="{file}_filt_sim_",
         data="{file}_filt_sim"
     priority: 7
     shell:
         f"""
-        rm {{input.filt_sim_gen}}
-        mv {{input.filt_sim_gen_}} {{input.filt_sim_gen}}
          plink2 \
-         --data {{params.data}} ref-first \
+         --data {{params.data_}} ref-first \
          --make-bed \
          --out {{params.data}}
         """
@@ -212,18 +226,22 @@ rule merge_chroms:
         
 rule recode_merged:
     input:
-        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
-        bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
-        fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
+        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_full.bed"),
+        bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_full.bim"),
+        fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_full.fam"),
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf")
     priority: 9
     params:
-        data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
+        data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
+        CAUSAL_MAF_MIN=CAUSAL_MAF_MIN,
+        CAUSAL_MAF_MAX=CAUSAL_MAF_MAX 
     shell:
         f"""
         plink2 --bfile {{params.data}} \
         --recode vcf \
+        --maf {{params.CAUSAL_MAF_MIN}} \
+        --max-maf {{params.CAUSAL_MAF_MAX}} \
         --out {{params.data}}
         """
         
@@ -278,9 +296,43 @@ rule get_snps_list:
         k=k
     priority: 12
     shell:
-        f"""
-        ./pipeline_utils/get_snps_set.py {{params.data_dir}} {{params.pattern}} {{params.pheno_pattern}} {{input.vcf}} {{input.gmt}} {{input.path}} {{params.K}} {{params.k}}
-        """     
+        if not SNPS_PROVIDED:
+            f"""
+            ./pipeline_utils/get_snps_set.py \
+            {{params.data_dir}} \
+            {{params.pattern}} \
+            {{params.pheno_pattern}} \
+            {{input.vcf}} \
+            {{input.gmt}} \
+            {{input.path}} \
+            {{params.K}} \
+            {{params.k}}
+            """               
+        
+rule get_snps_list_by_snps:
+    input:
+        vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
+        snps_file=os.path.join(DATA_DIR,f"{SNPS_FILE}")
+    output:
+        annotated_snps = temp(os.path.join(DATA_DIR, f"{PATTERN}_{PHENOS_ID}_annotated_snps.tsv")),
+        tsv=os.path.join(DATA_DIR,f"{PATTERN}_{PHENOS_ID}_chosen_snps.tsv")
+    params:
+        data_dir=DATA_DIR,
+        pattern=PATTERN,
+        pheno_pattern=PHENOS_ID,
+        K=K
+    priority: 12
+    shell:
+        if SNPS_PROVIDED:
+            f"""
+            ./pipeline_utils/get_snps_by_snps.py \
+            {{params.data_dir}} \
+            {{params.pattern}} \
+            {{params.pheno_pattern}} \
+            {{input.vcf}} \
+            {{input.snps_file}} \
+            {{params.K}}
+            """     
 
 
 
