@@ -19,6 +19,7 @@ def get_file_name(full_path: str):
 
 configfile: "config.yaml"
     
+VCF_IN_DIR = config['vcf_in_dir']
 DATA_DIR = config['data_dir']
 IMAGES_DIR = config['images_dir']
 
@@ -115,7 +116,7 @@ rule all:
 
 rule filter_vcf:
     input:
-        vcf="{file}.vcf"
+        vcf=os.path.join(VCF_IN_DIR, os.path.basename("{file}.vcf"))
     output:
         vcf=temp("{file}_filt.vcf")
     priority: 1

@@ -1,3 +1,4 @@
+vcf_in_dir: data2/
 data_dir: data2/
 images_dir: images/
 vcfs_list: data2/chr.list
