@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
 
-DATA_DIR=$1
-GTF_IN=$2
+GTF_IN=$1
+GTF_OUT=$2
 
-cd $DATA_DIR
+GTF_MID=${GTF_OUT}_gen.gtf
+GTF_MID_SEL=${GTF_OUT}_gen_sel.gtf
 
 #extract only "gene" features from gtf (and delete comments from the beginning)
-> gen_${GTF_IN}.gtf
-sed -n '/^[^#]/,$p' ${GTF_IN}.gtf | awk -F'\t' '$3=="gene"'  | grep -E "^chr[0-9]+" >>  gen_${GTF_IN}.gtf
-sed -i '1,$s/^chr//' gen_${GTF_IN}.gtf
+> ${GTF_MID}
+sed -n '/^[^#]/,$p' ${GTF_IN} | awk -F'\t' '$3=="gene"'  | grep -E "^chr[0-9]+" >>  ${GTF_MID}
+sed -i '1,$s/^chr//' ${GTF_MID}
 
-awk -F'\t' -v OFS='\t' '$3=="gene"{split($9,a,";"); split(a[1],b," "); split(a[3],c," "); $NF="gene_id \"" b[2] "\"; gene_name \"" c[2] "\";"; print}' gen_${GTF_IN}.gtf > selected_gen_${GTF_IN}.gtf
+awk -F'\t' -v OFS='\t' '$3=="gene"{split($9,a,";"); split(a[1],b," "); split(a[3],c," "); $NF="gene_id \"" b[2] "\"; gene_name \"" c[2] "\";"; print}' ${GTF_MID} > ${GTF_MID_SEL}
 
 
 # sort by positions
-sort -k1,1n -k4,4n selected_gen_${GTF_IN}.gtf  > ${GTF_IN}_filt_sort.gtf
+sort -k1,1n -k4,4n ${GTF_MID_SEL}  > ${GTF_OUT}
 
-rm gen_${GTF_IN}.gtf
-rm selected_gen_${GTF_IN}.gtf
-
-cd ..
-
+rm ${GTF_MID}
+rm ${GTF_MID_SEL}

@@ -11,6 +11,9 @@ def get_chrom(wildcards):
 
 def get_file_name(full_path: str):
     return os.path.splitext(os.path.basename(full_path))[0]
+    
+def remove_ext(full_path: str):
+    return os.path.splitext(full_path)[0]
 
 
 # ===================================
@@ -26,12 +29,13 @@ IMAGES_DIR = config['images_dir']
 # VCFS_LIST -- file with structure: `path_to_vcf,chromosome` per row
 VCFS_LIST = config['vcfs_list']
 IDS_FILE = config['ids_file']
-GTF_IN = config['anno_file'].replace('.gtf', '')
-GMT_IN = config['gmt_file'].replace('.gmt', '')
+GTF_IN = config['anno_file']
+GMT_IN = config['gmt_file']
 
 # if use_causal_snps (default = True), causal SNPs are taken from `causal_snps` file
 # otherwise -- randomly selected from `causal_snps` file.
 SNPS_PROVIDED = config['use_causal_snps'] 
+
 PATH_FILE = config['causal_pathways']
 SNPS_FILE = config['causal_snps']
 
@@ -48,9 +52,10 @@ k = config['k']
 
 GEN_VAR = config['gen_var']
 H2S = config['h2s']
-SHARED = config['shared']
 M_BETA = config['m_beta']
 SD_BETA = config['sd_beta']
+P_INDEPENDENT_GENETIC = config['p_independent_genetic']
+PHI = config['phi']
 
 # pattern of all files (starting from genotypes)
 PATTERN = config['pattern']
@@ -61,14 +66,15 @@ SIM_ID = config['sim_id']
 DRAW_FLAG = config['draw_flag']
 
 
+
 # ===================================
 # READ FILES
 # ===================================
 
 with open(VCFS_LIST) as f:
     file_chrom = [line.strip().split(',') for line in f]
-    file2chrom = {file:chrom for file, chrom in file_chrom}
-    files = map(lambda x: get_file_name(x), list(file2chrom.keys()))
+    file2chrom = {os.path.basename(file):chrom for file, chrom in file_chrom}
+    files = list(map(lambda x: get_file_name(x), list(file2chrom.keys())))
     
     
 VCFS_LIST_PATTERN = get_file_name(VCFS_LIST)
@@ -116,10 +122,9 @@ rule all:
 
 rule filter_vcf:
     input:
-        vcf=os.path.join(VCF_IN_DIR, os.path.basename("{file}.vcf"))
+        vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf"))
     output:
         vcf=temp("{file}_filt.vcf")
-    priority: 1
     shell:
         f'''plink2 --vcf {{input.vcf}} \
         --max-alleles 2 \
@@ -140,7 +145,6 @@ rule haps_legend_map_bfile:
         filt_bed="{file}_filt.bed",
         filt_bim="{file}_filt.bim",
         filt_fam="{file}_filt.fam"
-    priority: 3
     params:
         data="{file}_filt"
     shell:
@@ -163,7 +167,6 @@ rule hapgen2:
         filt_sim_legend=temp("{file}_filt_sim.legend"),
     params:
         data="{file}_filt"
-    priority: 4
     shell:
         f"""
         hapgen2 \
@@ -189,7 +192,6 @@ rule postprocess_hapgen2:
         filt_sim_gen=temp("{file}_filt_sim.gen"),
         filt_sim_sample=temp("{file}_filt_sim.sample"),
         filt_sim_haps=temp("{file}_filt_sim.haps"),
-    priority: 5
     params:
         data="{file}_filt_sim"
     shell:
@@ -206,7 +208,6 @@ rule change_snp_hapgen:
     output:
         filt_sim_gen_=temp("{file}_filt_sim_.gen"),
         filt_sim_sample_=temp("{file}_filt_sim_.sample")
-    priority: 6
     params:
         get_chrom = get_chrom
     shell:
@@ -221,13 +222,12 @@ rule make_bed_from_hapgen2:
         filt_sim_gen_="{file}_filt_sim_.gen",
         filt_sim_sample_="{file}_filt_sim_.sample"
     output:
-        filt_sim_bed="{file}_filt_sim.bed",
-        filt_sim_bim="{file}_filt_sim.bim",
-        filt_sim_fam="{file}_filt_sim.fam"
+        filt_sim_bed=temp("{file}_filt_sim.bed"),
+        filt_sim_bim=temp("{file}_filt_sim.bim"),
+        filt_sim_fam=temp("{file}_filt_sim.fam")
     params:
         data_="{file}_filt_sim_",
         data="{file}_filt_sim"
-    priority: 7
     shell:
         f"""
          plink2 \
@@ -239,19 +239,18 @@ rule make_bed_from_hapgen2:
         
 rule merge_chroms:
     input:
+        chrom_list=os.path.join(DATA_DIR, f"{VCFS_LIST_PATTERN}_filt_sim.list"),
         input=expand(os.path.join(DATA_DIR, "{file}_filt_sim.bed"), file=files)
     output:
         filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam")
-    priority: 8
     params:
-        list=os.path.join(DATA_DIR, f"{VCFS_LIST_PATTERN}_filt_sim.list"
         data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
     shell:
         f"""
         plink2 \
-        --pmerge-list {{params.list}} bfile \
+        --pmerge-list {{input.chrom_list}} bfile \
         --set-all-var-ids @:# \
         --make-bed \
         --out {{params.data}}
@@ -265,7 +264,6 @@ rule recode_merged:
         fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
     output:
         vcf=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"))
-    priority: 9
     params:
         data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
         CAUSAL_MAF_MIN=CAUSAL_MAF_MIN,
@@ -283,16 +281,12 @@ rule recode_merged:
         
 rule transform_gtf:
     input:
-        gtf=os.path.join(DATA_DIR,f"{GTF_IN}.gtf")
+        gtf=GTF_IN
     output:
-        filt_gtf=temp(os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf"))
-    priority: 10
-    params:
-        data_dir=DATA_DIR,
-        gtf_in=GTF_IN,
+        filt_gtf=temp(os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf"))
     shell:
         f"""
-        ./pipeline_utils/script_make_gtf.sh {{params.data_dir}} {{params.gtf_in}}
+        ./pipeline_utils/script_make_gtf.sh {{input.gtf}} {{output.filt_gtf}}
         """
         
         
@@ -300,11 +294,10 @@ rule transform_gtf:
 rule annotate_vcf:
     input:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"),
-        gtf=os.path.join(DATA_DIR,f"{GTF_IN}_filt_sort.gtf")
+        gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
-    priority: 11
     shell:
         f"""
         ./pipeline_utils/bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
@@ -315,7 +308,7 @@ rule annotate_vcf:
 rule get_snps_list:
     input:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        gmt=os.path.join(DATA_DIR,f"{GMT_IN}.gmt"),
+        gmt=GMT_IN,
         path=os.path.join(DATA_DIR,f"{PATH_FILE}"),
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
     output:
@@ -328,10 +321,9 @@ rule get_snps_list:
         pheno_pattern=CAUSAL_ID,
         K=K,
         k=k
-    priority: 12
-    shell:
+    run:
         if not SNPS_PROVIDED:
-            f"""
+            shell(f"""
             ./pipeline_utils/get_snps_set.py \
             {{params.data_dir}} \
             {{params.pattern}} \
@@ -341,12 +333,12 @@ rule get_snps_list:
             {{input.path}} \
             {{params.K}} \
             {{params.k}}
-            """               
+            """)            
         
 rule get_snps_list_by_snps:
     input:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        snps_file=os.path.join(DATA_DIR,f"{SNPS_FILE}")
+        snps_file=f"{SNPS_FILE}"
     output:
         annotated_snps = temp(os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_annotated_snps.tsv")),
         tsv=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
@@ -355,10 +347,9 @@ rule get_snps_list_by_snps:
         pattern=PATTERN,
         pheno_pattern=CAUSAL_ID,
         K=K
-    priority: 12
-    shell:
+    run:
         if SNPS_PROVIDED:
-            f"""
+            shell(f"""
             ./pipeline_utils/get_snps_by_snps.py \
             {{params.data_dir}} \
             {{params.pattern}} \
@@ -366,7 +357,7 @@ rule get_snps_list_by_snps:
             {{input.vcf}} \
             {{input.snps_file}} \
             {{params.K}}
-            """     
+            """)     
 
 
 
@@ -380,10 +371,9 @@ rule extract_snps:
         bed=temp(os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.bed")),
         bim=temp(os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.bim")),
         fam=temp(os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.fam"))
-    priority: 13
     params:
         filt_sim_data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
-        out_data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL}_filt_sim_snps"),
+        out_data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps"),
     shell:
         f"""
         plink2 \
@@ -408,10 +398,10 @@ rule pheno_sim:
         data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps"),
         GEN_VAR=GEN_VAR,
         H2S=H2S,
-        SHARED=SHARED,
         M_BETA=M_BETA,
         SD_BETA=SD_BETA,
-    priority: 14
+        P_INDEPENDENT_GENETIC=P_INDEPENDENT_GENETIC,
+        PHI=PHI
     shell:
         f"""
         ./pipeline_utils/pheno_sim.R \
@@ -422,9 +412,10 @@ rule pheno_sim:
         {{params.K}} \
         {{GEN_VAR}} \
         {{H2S}} \
-        {{SHARED}}\
         {{M_BETA}} \
         {{SD_BETA}}
+        {{P_INDEPENDENT_GENETIC}} \
+        {{PHI}}
         """   
         
 # todo make custom gwas        
@@ -436,7 +427,6 @@ rule gwas:
         pheno=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos.tsv"),
     output:
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
-    priority: 15
     params:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
         pheno=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos"),
@@ -460,7 +450,6 @@ rule pca:
         pca_val_indep=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep.eigenval")),
         pca_vec=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.eigenvec")),
         pca_vec_indep=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep.eigenvec"))
-    priority: 16
     params:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
     shell:
@@ -477,7 +466,6 @@ rule draw_gwas:
     output:
         mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas_mh.pdf"),
         qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas_qq.pdf")
-    priority: 17
     params:
         name=f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas"
     shell:
@@ -499,7 +487,6 @@ rule draw_pca:
     output:
         output_pca=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_pca.pdf"),
         output_pca_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep_pca.pdf")
-    priority: 18
     params:
         file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
         file_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep"),
