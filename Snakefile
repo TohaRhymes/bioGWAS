@@ -240,7 +240,9 @@ rule make_bed_from_hapgen2:
 rule merge_chroms:
     input:
         chrom_list=os.path.join(DATA_DIR, f"{VCFS_LIST_PATTERN}_filt_sim.list"),
-        input=expand(os.path.join(DATA_DIR, "{file}_filt_sim.bed"), file=files)
+        input_bed=expand(os.path.join(DATA_DIR, "{file}_filt_sim.bed"), file=files),
+        input_bim=expand(os.path.join(DATA_DIR, "{file}_filt_sim.bim"), file=files),
+        input_fam=expand(os.path.join(DATA_DIR, "{file}_filt_sim.fam"), file=files)
     output:
         filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
@@ -304,15 +306,33 @@ rule annotate_vcf:
         """        
         
             
-        
+
+causal_genes_output = []
+if not SNPS_PROVIDED:
+    causal_genes_output = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_causal_geneset_snps.txt')
+    
+gmt_file = []
+path_file = []
+included_txt_file = []
+snps_file = []
+if SNPS_PROVIDED:
+    snps_file=SNPS_FILE
+else:
+    gmt_file = GMT_IN
+    path_file = PATH_FILE
+    included_txt_file = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt')
+    
+
+
 rule get_snps_list:
     input:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        gmt=GMT_IN,
-        path=os.path.join(DATA_DIR,f"{PATH_FILE}"),
-        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
+        gmt=gmt_file,
+        path=path_file,
+        included_txt = included_txt_file,
+        snps_file=snps_file
     output:
-        causal_genes = temp(os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_causal_geneset_snps.txt')),
+        causal_genes = temp(causal_genes_output),
         annotated_snps = temp(os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_annotated_snps.tsv")),
         tsv=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
     params:
@@ -322,7 +342,17 @@ rule get_snps_list:
         K=K,
         k=k
     run:
-        if not SNPS_PROVIDED:
+        if SNPS_PROVIDED:
+            shell(f"""
+            ./pipeline_utils/get_snps_by_snps.py \
+            {{params.data_dir}} \
+            {{params.pattern}} \
+            {{params.pheno_pattern}} \
+            {{input.vcf}} \
+            {{input.snps_file}} \
+            {{params.K}}
+            """) 
+        else:
             shell(f"""
             ./pipeline_utils/get_snps_set.py \
             {{params.data_dir}} \
@@ -334,30 +364,7 @@ rule get_snps_list:
             {{params.K}} \
             {{params.k}}
             """)            
-        
-rule get_snps_list_by_snps:
-    input:
-        vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
-        snps_file=f"{SNPS_FILE}"
-    output:
-        annotated_snps = temp(os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_annotated_snps.tsv")),
-        tsv=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
-    params:
-        data_dir=DATA_DIR,
-        pattern=PATTERN,
-        pheno_pattern=CAUSAL_ID,
-        K=K
-    run:
-        if SNPS_PROVIDED:
-            shell(f"""
-            ./pipeline_utils/get_snps_by_snps.py \
-            {{params.data_dir}} \
-            {{params.pattern}} \
-            {{params.pheno_pattern}} \
-            {{input.vcf}} \
-            {{input.snps_file}} \
-            {{params.K}}
-            """)     
+
 
 
 
