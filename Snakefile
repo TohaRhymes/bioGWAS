@@ -420,7 +420,7 @@ rule pheno_sim:
         {{GEN_VAR}} \
         {{H2S}} \
         {{M_BETA}} \
-        {{SD_BETA}}
+        {{SD_BETA}} \
         {{P_INDEPENDENT_GENETIC}} \
         {{PHI}}
         """   
