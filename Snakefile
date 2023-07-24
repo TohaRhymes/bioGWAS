@@ -50,12 +50,18 @@ N = config['N']
 K = config['K']
 k = config['k']
 
-GEN_VAR = config['gen_var']
-H2S = config['h2s']
+
 M_BETA = config['m_beta']
 SD_BETA = config['sd_beta']
+
+GEN_VAR = config['gen_var']
+
+H2S = config['h2s']
 P_INDEPENDENT_GENETIC = config['p_independent_genetic']
+THETA = config['theta']
+
 PHI = config['phi']
+ALPHA = config['alpha']
 
 # pattern of all files (starting from genotypes)
 PATTERN = config['pattern']
@@ -403,12 +409,14 @@ rule pheno_sim:
         K=K,
         N=N,
         data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps"),
-        GEN_VAR=GEN_VAR,
-        H2S=H2S,
         M_BETA=M_BETA,
         SD_BETA=SD_BETA,
+        GEN_VAR=GEN_VAR,
+        H2S=H2S,
         P_INDEPENDENT_GENETIC=P_INDEPENDENT_GENETIC,
-        PHI=PHI
+        THETA=THETA,
+        PHI=PHI,
+        ALPHA=ALPHA
     shell:
         f"""
         ./pipeline_utils/pheno_sim.R \
@@ -417,12 +425,14 @@ rule pheno_sim:
         {{output.tsv}} \
         {{params.N}} \
         {{params.K}} \
-        {{GEN_VAR}} \
-        {{H2S}} \
         {{M_BETA}} \
         {{SD_BETA}} \
+        {{GEN_VAR}} \
+        {{H2S}} \
         {{P_INDEPENDENT_GENETIC}} \
-        {{PHI}}
+        {{THETA}} \
+        {{PHI}} \
+        {{ALPHA}}
         """   
         
 # todo make custom gwas        

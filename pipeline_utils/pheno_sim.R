@@ -33,22 +33,37 @@ geno_file <- args[2]
 pheno_file <- args[3]
 N_samples <- as.numeric(args[4])
 N_genes <-as.numeric(args[5])
-genVar <- as.numeric(args[6]) #!!! 
-h2s <- as.numeric(args[7]) # доля от генвар, которую составля.т эффекты моих снипов
 
-mBeta <- as.numeric(args[8])
-sdBeta <- as.numeric(args[9])
+mBeta <- as.numeric(args[6])
+sdBeta <- as.numeric(args[7])
 
+genVar <- as.numeric(args[8]) # noiseVar = 1-genVar 
+
+# Genetic
+h2s <- as.numeric(args[9]) # доля от генвар, которую составля.т эффекты моих снипов
 pIndependentGenetic <- as.numeric(args[10]) #proportion of genetic variant effects to have a trait-independent fixed effect
-phi <- as.numeric(args[11])
+theta  <- as.numeric(args[11]) #  proportion of variance of shared genetic variant effects
+
+# Noise
+phi <- as.numeric(args[12])
+alpha <- as.numeric(args[13])
+
+
+if(genVar==0){
+  h2s <- NULL
+  pIndependentGenetic <- NULL
+  theta <- NULL
+}
+if(genVar==1){
+  phi <- NULL
+  alpha <- NULL
+}
 
 setwd(WD)
-
 
 genotypes <- readStandardGenotypes(N=N_samples, 
 					filename=geno_file,
 					format="plink")
-
 phenotype <- runSimulation(N = N_samples, 
                            P = 1, 
                            genotypefile = geno_file,
@@ -76,5 +91,7 @@ write.table(Y[c("#FID", "IID", "t1")], file=pheno_file, quote=FALSE, sep='\t', c
 
 print(paste0('Pheno wrote to: ', pheno_file))
 
+image_name <- paste0(pheno_file, ".RData")
 
+save.image(file = image_name)
 
