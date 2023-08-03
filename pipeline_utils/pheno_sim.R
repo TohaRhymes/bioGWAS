@@ -49,6 +49,11 @@ phi <- as.numeric(args[12])
 alpha <- as.numeric(args[13])
 
 
+seed <- as.numeric(args[14])
+if (is.na(seed)){
+    seed <- 219453
+}
+
 if(genVar==0){
   h2s <- NULL
   pIndependentGenetic <- NULL
@@ -74,8 +79,11 @@ phenotype <- runSimulation(N = N_samples,
                            mBetaGenetic = mBeta, 
                            sdBetaGenetic = sdBeta,
                            pIndependentGenetic = pIndependentGenetic,
+                           theta=theta,
                            phi = phi,
-                           verbose = TRUE)
+                           alpha=alpha,
+                           verbose = TRUE,
+                          seed=seed)
 
 
 print("Saving...")
