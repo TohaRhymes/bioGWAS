@@ -2,6 +2,36 @@
 
 Human GWAS data simulator using 1000 human genomes project data.
 
+
+### Launch
+
+Example of launching simulation:
+
+```
+./biogwas.py \
+-vd data2  \
+-dd data3  \
+-id images  \
+-vl  data2/chr.list \
+-if  data2/EUR_SAMPLES_ID.txt \
+-af data2/gencode.v37.annotation.gtf \
+-gf data2/h.all.v2023.1.Hs.symbols.gmt  \
+-cp data2/pathways.csv \
+-K 10  \
+-k 5  \
+-p PATTERN  \
+-cid CAUSAL_ID  \
+-sid SIM_ID 
+```
+
+
+Full list of parameters with its description can be found here:
+
+```
+./biogwas.py --help
+```
+
+
 ### Setup with Snakemake
 
 #### 1. Configuration:
@@ -30,16 +60,16 @@ Results are stored in:
    * `data/<PATTERN>_<PHENOS_ID>_<SIM_ID>_phenos.vcf` -- simulated phenotypes file;
    * `data/<PATTERN>_<PHENOS_ID>_<SIM_ID>_gwas.tsv` -- association data (GWAS summary statistics).
 
-## Extra-scripts for article
+### Extra-scripts for article
 
-### Iterate over parameters
+#### Iterate over parameters
 
 * `iterate_params.py` -- script for iteration over parameters and save all the results to `DATA_DIR`
 * `iterate_results.py` -- script for iteration over results of parameters iteratin (previous script). It generates: 
    * `data/<PATTERN>_<PHENOS_ID>_compare_results.tsv` -- table with summary of comparison (with number of found causal SNPS, ...)
 * `results_1_check_best_parameters.ipynb` -- visualization of the results of parameters enumeration.
 
-### LSEA launching
+#### LSEA launching
 
 * `iterate_lsea.py` -- script for launching LSEA a lot of times to validate results.
 * `results_2_check_LSEA.ipynb` -- visualization of the results of validating LSEA.
