@@ -56,11 +56,11 @@ SD_BETA = config['sd_beta']
 
 GEN_VAR = config['gen_var']
 
-H2S = config['h2s']
+H2S = 1.0
 P_INDEPENDENT_GENETIC = config['p_independent_genetic']
 THETA = config['theta']
 
-PHI = config['phi']
+PHI = 1.0
 ALPHA = config['alpha']
 
 # pattern of all files (starting from genotypes)
@@ -70,6 +70,9 @@ CAUSAL_ID = config['causal_id']
 # ID of phenotypes simulation for selected causal SNPs
 SIM_ID = config['sim_id']
 DRAW_FLAG = config['draw_flag']
+
+
+SEED = config['seed']
 
 
 
@@ -416,7 +419,8 @@ rule pheno_sim:
         P_INDEPENDENT_GENETIC=P_INDEPENDENT_GENETIC,
         THETA=THETA,
         PHI=PHI,
-        ALPHA=ALPHA
+        ALPHA=ALPHA,
+        SEED=SEED
     shell:
         f"""
         ./pipeline_utils/pheno_sim.R \
@@ -432,7 +436,8 @@ rule pheno_sim:
         {{P_INDEPENDENT_GENETIC}} \
         {{THETA}} \
         {{PHI}} \
-        {{ALPHA}}
+        {{ALPHA}} \
+        {{SEED}}
         """   
         
 # todo make custom gwas        

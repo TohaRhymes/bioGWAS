@@ -30,7 +30,7 @@ vcf_file = sys.argv[4]
 # ------------------------
 # pathway 2 genes file
 snps_file = sys.argv[5]
-K = int(sys.argv[6])
+K = nt(float(sys.argv[6]))
 # ========================
 
 # annotated snps from bed

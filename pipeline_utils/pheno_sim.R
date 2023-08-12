@@ -1,19 +1,9 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
+if (!require("PhenotypeSimulator")) install.packages("PhenotypeSimulator")  #0.3.4
+
 library(PhenotypeSimulator)
-
-# plink2 --bfile chr_EUR_sim_snps --recode vcf --out chr_EUR_sim_snps
-# plink2 --vcf chr_EUR_sim_snps.vcf --make-bed --out _chr_EUR_sim_snps
-
-#args[1] <- wd
-#args[2] <- readgenotypes
-#args[3] <- save to
-#args[4] <- # samples
-#args[5] <- # of snps
-#args[6] <- genvar
-#args[7] <- h2s
-
 
 # args<-c("./", 
 # 	"data2/chr_ph_ss_K10_filt_sim_snps",

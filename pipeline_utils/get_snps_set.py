@@ -46,8 +46,8 @@ vcf_file = sys.argv[4]
 gmt_file = sys.argv[5]
 # file with selected pathways
 pathways_file = sys.argv[6]
-K = int(sys.argv[7])
-k = int(sys.argv[8])
+K = int(float(sys.argv[7]))
+k = int(float(sys.argv[8]))
 # ========================
 
 #included in bed file genes
