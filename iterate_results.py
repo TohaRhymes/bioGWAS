@@ -32,34 +32,29 @@ def get_snps(line):
 # In[24]:
 
 
-CAUSAL_SNP_FILE = "data2/chr_ph_ss_K{}_chosen_snps.tsv"
-GWAS_FILE = "data2/chr_ph_ss_K{}_m{}_sd{}_gv{}_h2s{}_gwas.tsv"
-FILE_RESULTS="data2/chr_ph_sperm_compare_results.tsv"
-BFILE="data2/chr_filt_sim"
+CAUSAL_SNP_FILE = "data3/PAT_ph_K{}_chosen_snps.tsv"
+GWAS_FILE = "data3/PAT_ph_K{}_m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}_theta{theta}_pIndep{pIndep}_phi{phi}_alpha{alpha}_gwas.tsv"
+FILE_RESULTS="data3/PAT_ph_compare_results.tsv"
+BFILE="data3/PAT_filt_sim"
 # ## Params for one K
 
 # In[4]:
 
 
-Ks = [10, 30, 50 ]
-
 # try these m_betas
 m_betas = (
-    0.01, 
-    0.05, 
-    0.1, 
-    0.2, 
-    0.3, 
+    0.05,
     0.5)
 # use these sd for m_betas above respectively
 sd_betas = (
-    (0.001, 0.005),
     (0.001, 0.01),
-    (0.001, 0.01, 0.05),
-    (0.01, 0.05, 0.1),
-    (0.01, 0.05, 0.1),
-    (0.01, 0.1, 0.3),
+    (0.05, 0.2),
 )
+
+Ks = [
+     10,
+    30
+]
 
 assert len(m_betas) == len(sd_betas)
 # make products
@@ -67,20 +62,43 @@ m_sd_comb = []
 for mb, sds in zip(m_betas, sd_betas):
     m_sd_comb += list(product([mb], sds))
 # for every of combinations above, use these genvar and sd
-gen_vars = (0.05, 0.5)
-h2ss = (0.1, 0.5)
+gen_vars = (0, 0.1, 0.5, 0.9, 1)
+h2ss = (1.0,)
 gv_h2s_comb = list(product(gen_vars, h2ss))
 
-# print("These combinations of m and sd:")
-# pprint(m_sd_comb)
-# print("These combinations of gv and h2s:")
-# pprint(gv_h2s_comb)
+
+theta_pIndep_comb = [(0,1), (0.5, 0.5), (1, 0)]
+
+phi_alpha_comb = [(1, 0), (1, 0.5)]
+
+print("These combinations of m and sd:")
+pprint(m_sd_comb)
+print("These combinations of gv and h2s:")
+pprint(gv_h2s_comb)
+print("These combinations of theta and pIndep:")
+pprint(theta_pIndep_comb)
+print("These combinations of phi and alpha:")
+pprint(phi_alpha_comb)
 
 params = [
-    {"m_beta": m, "sd_beta": sd, "gen_var": gv, "h2s": h2s}
-    for (m, sd), (gv, h2s) in list(product(m_sd_comb, gv_h2s_comb))
+    {"m_beta": m, 
+     "sd_beta": sd, 
+     "gen_var": gv, 
+     "h2s": h2s, 
+     "theta": theta, 
+     "pIndep": pIndep, 
+     "phi":phi, 
+     "alpha":alpha}
+    for (m, sd), 
+    (gv, h2s), 
+    (theta, pIndep), 
+    (phi, alpha) in list(product(m_sd_comb, 
+                                           gv_h2s_comb, 
+                                           theta_pIndep_comb,
+                                           phi_alpha_comb))
 ]
-# pprint(params)
+pprint(params)
+print(f"Amount of parameters sets: {len(params)}")
 
 
 # ## All params set
@@ -107,14 +125,17 @@ result_set = []
 
 ## SNPs set for every k
 for param in tqdm(params):
+    m_beta = param["m_beta"]
+    sd_beta = param["sd_beta"]
+    gen_var = param["gen_var"]
+    h2s = param["h2s"]
+    theta = param["theta"]
+    pIndep = param["pIndep"]
+    phi = param["phi"]
+    alpha = param["alpha"]
     for K in Ks:
-        m = param["m_beta"]
-        sd = param["sd_beta"]
-        gv = param["gen_var"]
-        h2s = param["h2s"]
-
         causal_snp_file = CAUSAL_SNP_FILE.format(K)
-        gwas_file = GWAS_FILE.format(K, m, sd, gv, h2s)
+        gwas_file = GWAS_FILE.format(K, **param)
         # count number of snps
         with open(gwas_file, "rb") as f:
             N = sum(1 for _ in f) - 1
@@ -144,15 +165,12 @@ for param in tqdm(params):
                 clumps_data = pd.read_fwf(f"{FILE}.clumped", sep='\t')
             except FileNotFoundError:
                 results = {"K": K, 
-               "m_beta" : m, 
-               "sd_beta" : sd, 
-               "gen_var" : gv, 
-               "h2s" : h2s,
+                **param,
                 'clumps_total': 0,
                 'clumps_causal': 0,
                 'clumps_not_causal': 0,
                 'causal_found': 0,
-               'causal_not_found': 1,
+                'causal_not_found': 1.0,
               }
                 result_set.append(results)
                 continue
@@ -190,10 +208,7 @@ for param in tqdm(params):
 
 
         results = {"K": K, 
-                   "m_beta" : m, 
-                   "sd_beta" : sd, 
-                   "gen_var" : gv, 
-                   "h2s" : h2s,
+                    **param,
                     'clumps_total': len(snp2list),
                     'clumps_causal': round(len(clumps_causal)/len(snp2list), 5),
                     'clumps_not_causal': round(len(clumps_not_causal)/len(snp2list), 5),
