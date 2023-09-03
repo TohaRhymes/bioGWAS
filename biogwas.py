@@ -175,7 +175,7 @@ if __name__ == '__main__':
                         help='Only SNPs with MAF greater or equal to provided are used as causal SNPs (they influence phenotype). The maximal theshold is set ufing `--causal_maf_max`.')
     maf_settings.add_argument('-maf_max', 
                         '--causal_maf_max', 
-                        default=0.1,  
+                        default=0.2,  
                         required=False,
                         type=float, 
                         help='Only SNPs with MAF less or equal to provided are used as causal SNPs (they influence phenotype). The minimal theshold is set ufing `--causal_maf_max`.')
@@ -190,27 +190,29 @@ if __name__ == '__main__':
     sim_pheno_settings = parser.add_argument_group('phenotypes simulation settings')
     sim_pheno_settings.add_argument('-K', 
                         '--K', 
-                        required=True, 
+                        required=False, 
+                        default=10,
                         type=int, 
-                        help='Amount of causal SNPs. In case when SNPs were set (instead of sets), N should be less or equal than amount of given SNPs).')
+                        help='Amount of causal SNPs. In case when SNPs were set (instead of sets), K should be less or equal than amount of given SNPs).')
     
     sim_pheno_settings.add_argument('-k', 
                         '--k', 
                         required=False, 
+                        default=5,         
                         type=int, 
                         help='Required when `--use_causal_snps` is set to False. Amount of causal SNPs selected from causal gene sets\' genes (other causal SNPs are chosen randomly).')
     
     sim_pheno_settings.add_argument('-mb', 
                         '--m_beta', 
                         required=False, 
-                        default=0.5,
+                        default=0.05,
                         type=float, 
                         help='Phenotype simulator parameter: SNP\'s effect size.')
     
     sim_pheno_settings.add_argument('-sb', 
                         '--sd_beta', 
                         required=False, 
-                        default=0.1, 
+                        default=0.001, 
                         type=float, 
                         help='Phenotype simulator parameter: standard deviation of `--m_beta`')
     
@@ -224,14 +226,14 @@ if __name__ == '__main__':
     sim_pheno_settings.add_argument('-pig', 
                         '--p_independent_genetic', 
                         required=False,  
-                        default=0.5,
+                        default=1.0,
                         type=float, 
                         help='Phenotype simulator parameter: proportion of genetic variant effects to have a trait-independent fixed effect')
     
     sim_pheno_settings.add_argument('-t', 
                         '--theta', 
                         required=False, 
-                        default=0.5,
+                        default=0.0,
                         type=float, 
                         help='Phenotype simulator parameter: proportion of variance of shared genetic variant effects')
     
