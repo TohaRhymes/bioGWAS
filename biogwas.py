@@ -8,6 +8,7 @@ import subprocess
 def main(args):
     with open(args.dependencies) as f:
         d = f.read()
+        
     s = f'''
 vcf_in_dir: {os.path.abspath(args.vcf_dir)}
 data_dir: {os.path.abspath(args.data_dir)}
@@ -44,21 +45,21 @@ draw_flag: {args.draw_flag}
 
 seed: {args.seed}
         '''
-    config = 'config_left.yaml'
-    with open(config, 'w') as w:
-        w.write(d+"\n"+s)
+    config = f'{args.snakefile}_config.yaml'
+#     with open(config, 'w') as w:
+#         w.write(d+"\n"+s)
 
-    print(f'snakemake \
-    --nolock \
-    -s {args.snakefile} \
-    --configfile {config} \
-    --cores {args.threads}')
-    subprocess.call(f'snakemake \
-                      --nolock \
-                      -s {args.snakefile} \
-                      --configfile {config} \
-                      --cores {args.threads}', 
-                    shell=True)
+#     print(f'snakemake \
+#     --nolock \
+#     -s {args.snakefile} \
+#     --configfile {config} \
+#     --cores {args.threads}')
+#     subprocess.call(f'snakemake \
+#                       --nolock \
+#                       -s {args.snakefile} \
+#                       --configfile {config} \
+#                       --cores {args.threads}', 
+#                     shell=True)
 
     
     print("""
@@ -145,8 +146,8 @@ if __name__ == '__main__':
     causal_settings = parser.add_argument_group('causal SNPs settings')
     causal_settings.add_argument('-ucs', 
                         '--use_causal_snps', 
-                        default=False, 
-                        required=False,
+                        action=argparse.BooleanOptionalAction,
+                        default=False,
                         type=bool, 
                         help='Use specific set of SNPs (from the file in `--causal_snps` parameter), or random SNPs from the specific pathways (from the file in `--causal_pathways` parameter and that were annotated using gmt-file from `--gmt_file` parameter).')
     causal_settings.add_argument('-cp', 
@@ -264,10 +265,10 @@ if __name__ == '__main__':
     draw_settings = parser.add_argument_group('draw settings')
     draw_settings.add_argument('-df', 
                         '--draw_flag', 
-                        required=False, 
+                        action=argparse.BooleanOptionalAction,
                         default=False,
                         type=bool, 
-                        help='If flag is set to True, make graphical representation of simulated genotypes and associations (PCA, MH and QQ).')
+                        help='If flag is set, make graphical representation of simulated genotypes and associations (PCA, MH and QQ).')
     # Seed
     seed_settings = parser.add_argument_group('seed settings')
     seed_settings.add_argument('-S', 

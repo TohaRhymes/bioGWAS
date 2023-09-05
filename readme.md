@@ -9,6 +9,23 @@ Example of launching simulation:
 
 ```
 ./biogwas.py \
+--vcf_dir data2  \
+--data_dir data3  \
+--img_dir images  \
+--vcfs_list  data2/chr.list \
+--ids_file  data2/EUR_SAMPLES_ID.txt \
+--anno_file data2/gencode.v37.annotation.gtf \
+--gmt_file data2/h.all.v2023.1.Hs.symbols.gmt  \
+--causal_pathways data2/pathways.csv \
+--pattern PATTERN  \
+--causal_id CAUSAL_ID  \
+--sim_id SIM_ID 
+```
+
+Or shortly:
+
+```
+./biogwas.py \
 -vd data2  \
 -dd data3  \
 -id images  \
@@ -17,22 +34,20 @@ Example of launching simulation:
 -af data2/gencode.v37.annotation.gtf \
 -gf data2/h.all.v2023.1.Hs.symbols.gmt  \
 -cp data2/pathways.csv \
--K 10  \
--k 5  \
 -p PATTERN  \
 -cid CAUSAL_ID  \
 -sid SIM_ID 
 ```
 
 
-Full list of parameters with its description can be found here:
+Full list of parameters with its description and default values can be found here:
 
 ```
 ./biogwas.py --help
 ```
 
 
-### Setup with Snakemake
+### Launch with Snakemake
 
 #### 1. Configuration:
 
