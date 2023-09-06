@@ -12,22 +12,34 @@ library("ggplot2")
 library("RColorBrewer")
 library("CMplot")
 library("dplyr")
+library("rstudioapi")
 
 prepare_snp <- function(FILE) {
   print('Reading table...')
   table <- read.table(FILE, header = T, sep = "\t")
   print('Table imported!')
   
-  table$chr[table$chr == "X"] <- 23
-  table$chr[table$chr == "Y"] <- 24
+  table$CHR[table$CHR == "X"] <- 23
+  table$CHR[table$CHR == "Y"] <- 24
   
-  snp <- table$rsid
-  chr <- as.numeric(table$chr)
-  pos <- as.numeric(table$pos)
-  pval <- as.numeric(table$pval)
-  final_table <- data.frame(snp, chr, pos, pval)
+  snp <- table$SNP
+  chr <- as.numeric(table$CHR)
+  pos <- as.numeric(table$BP)
+  pval <- as.numeric(table$P)
+  final_table <- na.omit(data.frame(snp, chr, pos, pval))
   return(final_table)
   
+}
+
+
+str2bool <- function(input_str)
+{
+  if(input_str == "0" || input_str == "FALSE" || input_str == "False" || input_str == "false" || input_str == "F"  || input_str == "f"){
+    input_str = FALSE
+  }else{
+    input_str = TRUE
+  }
+  return(input_str)
 }
 
 get_markers <- function(mutations, CUT_OFF, WINDOW) {
@@ -119,22 +131,41 @@ draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8
 }
 
 
-args = commandArgs(trailingOnly=TRUE)
+args = commandArgs(trailingOnly=FALSE)
 
 
 colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
 color <- sample(colors, 1)
 
+
+file_path = ""
+for (arg in args){
+    if (grepl('--file', arg)){
+        file_path=dirname(gsub("--file=", "", arg))
+        break
+    }
+}
+
+
+args = commandArgs(trailingOnly=TRUE)
 pheno_name <- args[1]
 file_pval <- args[2]
+clump <- str2bool(args[3])
+file_binary <- args[4]
 
-# pheno_name <- "chr_ph_sperm_m0.01_sd0.001_gv0.05_h2s0.5_gwas"
-# file_pval <- "data/chr_ph_sperm_m0.01_sd0.001_gv0.05_h2s0.5_gwas.tsv"
+
+# file_path<- "../1000genomes/pipeline_utils"
+# pheno_name <- "O14"
+# file_pval <- "data/O14.gwas.imputed_v3.both_sexes.qassoc"
+# clump <- TRUE
+# file_binary <- "../1000genomes/data3/PATTERN_filt_sim"
         
 print(pheno_name)
 print(file_pval)
 
 table <- prepare_snp(file_pval)
+
+head(table)
 
 # There are some times pvals = 0 => -log10(pval) = inf. 
 # We make these pvals equal to min pval that are not 0 (~e-200 -- e-300) 
@@ -146,31 +177,73 @@ if (sum(zero_flag, na.rm=TRUE)>0){
 
 max_pval <- max(-log10(table$pval), na.rm=TRUE)
 max_pval <- ceiling(max_pval)
+# p-value cut off for significant SNPs
 cutoff <-  0.05/nrow(table)
 
 
-
 print('getting markers...')
-# getting array of boolean: markers to sign:
-# loci interval (only one SNP with max pval will be signed)
-WINDOW <- 500000
-# maximum SNPs to sign (per chr)
-N_MARKERS <- 7
-# p-value cut off for significant SNPs
-CUT_OFF <- cutoff
+##  getting array of boolean: markers to sign: ##
+if(clump){
+    #R2 significance
+    R2 <- 0.1
+    # loci interval (only one SNP with max pval will be signed)
+    WINDOW <- 5000
 
-SNPs <- c()
-for (chr in unique(table$chr)){
-  cur_window <- WINDOW
-  flag <- table$chr == chr
-  markers <- get_markers(table[flag,], CUT_OFF, cur_window)
-  while(length(markers) > N_MARKERS){
-    cur_window <- 2 * cur_window
-    markers <- get_markers(table[flag,], CUT_OFF, cur_window)
-  }
-  SNPs <- c(SNPs, markers)
+        
+    get_clumped <- paste0(file_path, "/./clumped.py ", 
+                          file_binary, " ", 
+                          file_pval, " ", 
+                          cutoff, " ",
+                          R2, " ",
+                          WINDOW, " ")
+    
+    print(get_clumped)
+    system(get_clumped)
+    
+    
+    SNPs <- tryCatch(
+        {
+            CLUMP_FILE = paste0(file_binary, '_clumps.txt')
+            SNPs <- read.table(CLUMP_FILE, header = T, sep = "\t")
+            SNPs <- SNPs$SNP
+            print('Markers clumped')
+            return(SNPs)
+        }, error=function(e) {
+            return(NULL)
+        }, warning=function(e) {
+            return(NULL)
+        }
+    )
+    if(is.null(SNPs)){
+            clump <- FALSE
+    }
+            
 }
-print('Markers got')
+
+if (! clump){
+    # loci interval (only one SNP with max pval will be signed)
+    WINDOW <- 500000
+    # maximum SNPs to sign (per chr)
+    N_MARKERS <- 7
+    # p-value cut off for significant SNPs
+    CUT_OFF <- cutoff
+
+    SNPs <- c()
+    for (chr in unique(table$chr)){
+      cur_window <- WINDOW
+      flag <- table$chr == chr
+      markers <- get_markers(table[flag,], CUT_OFF, cur_window)
+      while(length(markers) > N_MARKERS){
+        cur_window <- 2 * cur_window
+        markers <- get_markers(table[flag,], CUT_OFF, cur_window)
+      }
+      SNPs <- c(SNPs, markers)
+    }
+    print('Markers got')
+    
+}
+    
+                      
 print('Evth done for drawing!')
 
 draw_mhplot_qq(table[,c('snp', 'chr', 'pos', 'pval')],
