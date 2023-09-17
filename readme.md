@@ -9,10 +9,11 @@ Example of launching simulation:
 
 ```
 ./biogwas.py \
---vcf_dir data2  \
+--input_dir data2  \
 --data_dir data3  \
 --img_dir images  \
---vcfs_list  data2/chr.list \
+--vcf_in_flag \
+--input_list  data2/chr.list \
 --ids_file  data2/EUR_SAMPLES_ID.txt \
 --anno_file data2/gencode.v37.annotation.gtf \
 --gmt_file data2/h.all.v2023.1.Hs.symbols.gmt  \
@@ -26,10 +27,11 @@ Or shortly:
 
 ```
 ./biogwas.py \
--vd data2  \
+-id data2  \
 -dd data3  \
 -id images  \
--vl  data2/chr.list \
+-vcf \
+-il  data2/chr.list \
 -if  data2/EUR_SAMPLES_ID.txt \
 -af data2/gencode.v37.annotation.gtf \
 -gf data2/h.all.v2023.1.Hs.symbols.gmt  \

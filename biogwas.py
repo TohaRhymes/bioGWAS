@@ -12,11 +12,12 @@ def main(path, args):
         
     s = f'''
 biogwas_path: {os.path.abspath(path)}
-vcf_in_dir: {os.path.abspath(args.vcf_dir)}
+vcf_in_dir: {os.path.abspath(args.input_dir)}
 data_dir: {os.path.abspath(args.data_dir)}
 images_dir: {os.path.abspath(args.img_dir)}
 
-vcfs_list: {os.path.abspath(args.vcfs_list)}
+vcf_in_flag: {args.vcf_in_flag}
+vcfs_list: {os.path.abspath(args.input_list)}
 ids_file: {os.path.abspath(args.ids_file)}
 anno_file: {os.path.abspath(args.anno_file)}
 gmt_file: {os.path.abspath(args.gmt_file)}
@@ -103,8 +104,8 @@ if __name__ == '__main__':
                         help='N cores.')
     # DIRS
     dir_settings = parser.add_argument_group('directories settings')
-    dir_settings.add_argument('-vd', 
-                        '--vcf_dir', 
+    dir_settings.add_argument('-id', 
+                        '--input_dir', 
                         required=True, 
                         type=str,
                         help='Path to the directory which contains input genotypes.')
@@ -120,16 +121,22 @@ if __name__ == '__main__':
                         help='Path to the directory which will be used as a storage for the images.')
     # INPUT FILES
     input_settings = parser.add_argument_group('input settings')
-    input_settings.add_argument('-vl', 
-                        '--vcfs_list', 
+    input_settings.add_argument('-vcf', 
+                        '--vcf_in_flag', 
+                        action=argparse.BooleanOptionalAction,
+                        default=False,
+                        type=bool, 
+                        help='If flag is set, algorithm expect input files be in `vcf` format; othervise - in `plink binary` format (requires `bed`+`bim`+`fam` files).')
+    input_settings.add_argument('-il', 
+                        '--input_list', 
                         required=True, 
                         type=str, 
-                        help='CSV-file that describes one vcf-file per line with structure: <file>,<chromosome_number>')
+                        help='CSV-file that describes one input file per line with structure: <file>,<chromosome_number>. For plink bfiles, provide just name without extension.')
     input_settings.add_argument('-if', 
                         '--ids_file', 
                         required=True, 
                         type=str, 
-                        help='File with samples ids\' (from VCFs) to use for sampling (one id per line).')
+                        help='File with samples ids\' (from input files) to use for sampling (one id per line).')
     input_settings.add_argument('-af', 
                         '--anno_file', 
                         required=True, 

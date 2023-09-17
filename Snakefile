@@ -29,7 +29,7 @@ PLINK2_PATH = config['plink2']
 BEDTOOLS_PATH = config['bedtools']
 HAPGEN2_PATH = config['hapgen2']
 
-    
+VCF_IN_FLAG=config['vcf_in_flag']
 VCF_IN_DIR = config['vcf_in_dir']
 DATA_DIR = config['data_dir']
 IMAGES_DIR = config['images_dir']
@@ -138,37 +138,82 @@ rule all:
 # ===================================
 
 
-rule filter_vcf:
+
+rule init_vcf_bfile:
     input:
         vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf"))
     output:
-        vcf=temp("{file}_filt.vcf")
+        bed="{file}.bed",
+        bim="{file}.bim",
+        fam="{file}.fam"
     shell:
         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
-        --max-alleles 2 \
-        --maf {MAF_FILTER} \
-        --keep {IDS_FILE}  \
-        --recode vcf \
+        --set-all-var-ids @:#  \
+        --make-bed  
         --out {{wildcards.file}}_filt'''
         
-
-rule haps_legend_map_bfile:
+        
+rule init_bfile_bfile:
     input:
-        filt_vcf="{file}_filt.vcf"
+        vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.bed"))
     output:
-        filt_haps=temp("{file}_filt.haps"),
-        filt_leg=temp("{file}_filt.legend"),
-        filt_map=temp("{file}_filt.map"),
-        filt_ped=temp("{file}_filt.ped"),
+        bed="{file}.bed",
+        bim="{file}.bim",
+        fam="{file}.fam",
+    data:
+        bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}.bed")),
+        bim=os.path.join(VCF_IN_DIR, os.path.basename("{file}.bim")),
+        fam=os.path.join(VCF_IN_DIR, os.path.basename("{file}.fam"))
+    shell:
+        f'''cp {{data.bed}} {{output.bed}}
+        cp {{data.bim}} {{output.bim}}
+        cp {{data.fam}} {{output.fam}}
+        '''
+  
+if VCF_IN_FLAG:
+    ruleorder: init_vcf_bfile > init_bfile_bfile
+else:
+    ruleorder: init_bfile_bfile > init_vcf_bfile
+
+
+
+
+rule filter_bfile:
+    input:
+        bed="{file}.bed",
+        bim="{file}.bim",
+        fam="{file}.fam"
+    output:
         filt_bed="{file}_filt.bed",
         filt_bim="{file}_filt.bim",
         filt_fam="{file}_filt.fam"
     params:
+        data="{file}"
+    shell:
+        f'''{PLINK2_PATH} --bfile {{params.data}} \
+        --max-alleles 2 \
+        --maf {MAF_FILTER} \
+        --keep {IDS_FILE}  \
+        --make-bed \
+        --out {{params.data}}_filt'''
+        
+
+rule haps_legend_map_bfile:
+    input:
+        filt_bed="{file}_filt.bed",
+        filt_bim="{file}_filt.bim",
+        filt_fam="{file}_filt.fam"
+    output:
+        filt_haps=temp("{file}_filt.haps"),
+        filt_leg=temp("{file}_filt.legend"),
+        filt_map=temp("{file}_filt.map"),
+        filt_ped=temp("{file}_filt.ped")
+    params:
         data="{file}_filt"
     shell:
-        f"""{PLINK2_PATH} --vcf {{input.filt_vcf}} --export ped  --out {{params.data}}
-        {PLINK2_PATH}  --vcf {{input.filt_vcf}}  --export hapslegend  --out {{params.data}}
-        {PLINK2_PATH}  --vcf {{input.filt_vcf}}  --set-all-var-ids @:#  --make-bed  --out {{params.data}}"""
+        f"""{PLINK2_PATH} --bfile {{params.data}} --export ped  --out {{params.data}}
+        {PLINK2_PATH}  --bfile {{params.data}}  --export hapslegend  --out {{params.data}}
+        {PLINK2_PATH}  --bfile {{params.data}}  --set-all-var-ids @:#  --make-bed  --out {{params.data}}"""
         
         
 
@@ -177,7 +222,7 @@ rule hapgen2:
         filt_haps="{file}_filt.haps",
         filt_legend="{file}_filt.legend",
         filt_map="{file}_filt.map",
-        filt_vcf="{file}_filt.vcf",
+        filt_bim="{file}_filt.bim"
     output:
         controls_gen=temp("{file}_filt_sim.controls.gen"),
         controls_haps=temp("{file}_filt_sim.controls.haps"),
@@ -192,7 +237,7 @@ rule hapgen2:
         -l {{input.filt_legend}} \
         -m {{input.filt_map}} \
         -o {{params.data}}_sim \
-        -dl $(bcftools query -f "%POS\n" {{input.filt_vcf}} | head -n 1) 1 1.5 2.25 \
+        -dl $(head -1 {{input.filt_bim} | awk '{print $4}') 1 1.5 2.25 \
         -int 0 500000000 \
         -n {N} 0 \
         -Ne 11418 \
