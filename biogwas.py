@@ -3,13 +3,15 @@
 import argparse
 import os
 import subprocess
+import sys
 
 
-def main(args):
+def main(path, args):
     with open(args.dependencies) as f:
         d = f.read()
         
     s = f'''
+biogwas_path: {os.path.abspath(path)}
 vcf_in_dir: {os.path.abspath(args.vcf_dir)}
 data_dir: {os.path.abspath(args.data_dir)}
 images_dir: {os.path.abspath(args.img_dir)}
@@ -45,22 +47,18 @@ draw_flag: {args.draw_flag}
 
 seed: {args.seed}
         '''
-    config = f'{args.snakefile}_config.yaml'
-#     with open(config, 'w') as w:
-#         w.write(d+"\n"+s)
-
-#     print(f'snakemake \
-#     --nolock \
-#     -s {args.snakefile} \
-#     --configfile {config} \
-#     --cores {args.threads}')
-#     subprocess.call(f'snakemake \
-#                       --nolock \
-#                       -s {args.snakefile} \
-#                       --configfile {config} \
-#                       --cores {args.threads}', 
-#                     shell=True)
-
+    config = os.path.abspath(args.config)
+    print(config)
+    with open(config, 'w') as w:
+        w.write(d+"\n"+s)
+        
+    command = f'snakemake \
+     --nolock \
+     -s {os.path.join(path, "Snakefile")} \
+     --configfile {config} \
+     --cores {args.threads}'
+    print(command)
+    subprocess.call(command, shell=True)
     
     print("""
      _     _        ______        ___    ____  
@@ -91,12 +89,12 @@ if __name__ == '__main__':
                         default='./dependencies.yaml',
                         required=False,
                         help='Path to the dependencies file with all constant paths for all internal programs.')
-    script_settings.add_argument('-s', 
-                        '--snakefile', 
+    script_settings.add_argument('-cfg', 
+                        '--config', 
                         type=str, 
-                        default='Snakefile',
+                        default='snakefile_config.yaml',
                         required=False,
-                        help='Path to the external snakefile.')
+                        help='Path to the future config file.')
     script_settings.add_argument('-T', 
                         '--threads', 
                         type=int, 
@@ -176,7 +174,7 @@ if __name__ == '__main__':
                         help='Only SNPs with MAF greater or equal to provided are used as causal SNPs (they influence phenotype). The maximal theshold is set ufing `--causal_maf_max`.')
     maf_settings.add_argument('-maf_max', 
                         '--causal_maf_max', 
-                        default=0.2,  
+                        default=0.9999999999,  
                         required=False,
                         type=float, 
                         help='Only SNPs with MAF less or equal to provided are used as causal SNPs (they influence phenotype). The minimal theshold is set ufing `--causal_maf_max`.')
@@ -279,5 +277,5 @@ if __name__ == '__main__':
                         help='Random seed of this phenotype (!!!) simulation.')
     
     args = parser.parse_args()
-
-    main(args)
+    path = os.path.dirname(sys.argv[0])
+    main(path, args)

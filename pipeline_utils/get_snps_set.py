@@ -117,6 +117,8 @@ output, error = process.communicate()
 print("Finishing")
 snps = pd.read_csv(annotated_snps_file, sep='\t', names=['chr', 's', 'e', 'gene'], header=None)
 snps.gene = snps.gene.apply(lambda x: extract_substrings(x))
+snps = snps.groupby('s').agg({'chr':'first', 'e' : 'first', 'gene' : 'first'}).reset_index()[['chr', 's', 'e', 'gene']].sort_values(by=['chr', 's'])
+
 snps = snps.groupby('gene').apply(lambda x: choose_random_row(x)).reset_index(drop=True)
 snps.e = snps.s+snps.e.apply(lambda x: len(x)-1)
 snps = snps.sort_values(['chr', 's'])

@@ -30,7 +30,7 @@ vcf_file = sys.argv[4]
 # ------------------------
 # pathway 2 genes file
 snps_file = sys.argv[5]
-K = nt(float(sys.argv[6]))
+K = int(float(sys.argv[6]))
 # ========================
 
 # annotated snps from bed
@@ -46,8 +46,12 @@ output, error = process.communicate()
 
 snps = pd.read_csv(annotated_snps_file, sep='\t', names=['chr', 's', 'e', 'gene'], header=None)
 snps.gene = snps.gene.apply(lambda x: extract_substrings(x))
+snps = snps.groupby('s').agg({'chr':'first', 'e' : 'first', 'gene' : 'first'}).reset_index()[['chr', 's', 'e', 'gene']].sort_values(by=['chr', 's'])
+
 snps = snps.sample(min(snps.shape[0], K), replace=False).reset_index(drop=True)
+
 snps.e = snps.s+snps.e.apply(lambda x: len(x)-1)
+print(snps.shape)
 snps = snps.sort_values(['chr', 's'])
 snps.to_csv(selected_snps_file, header=False, index=False, sep='\t')
 print(f'Succesfully saved to {selected_snps_file}')

@@ -12,7 +12,6 @@ library("ggplot2")
 library("RColorBrewer")
 library("CMplot")
 library("dplyr")
-library("rstudioapi")
 
 prepare_snp <- function(FILE) {
   print('Reading table...')
@@ -29,6 +28,22 @@ prepare_snp <- function(FILE) {
   final_table <- na.omit(data.frame(snp, chr, pos, pval))
   return(final_table)
   
+}
+
+try_read_file <- function(file_pval, CLUMP_FILE){
+    SNPs <- tryCatch({
+            print('tryin to clump')
+            CLUMP_FILE = paste0(gsub(".qassoc", "", file_pval), '_clumps.txt')
+            SNPs <- read.table(CLUMP_FILE, header = T, sep = "\t")
+            SNPs <- SNPs$SNP
+            print('Markers clumped')
+            return(SNPs)
+        }, error=function(e) {
+            SNPs <- NA
+            return(SNPs)
+        }
+    )
+    return(SNPs)
 }
 
 
@@ -99,15 +114,28 @@ get_markers <- function(mutations, CUT_OFF, WINDOW) {
 }
 
 
-draw_mhplot_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
+draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
   print("Q-Q printing...")
   CMplot(table,
-         plot.type = "q", col = color, box = FALSE, file = format, memo = name, dpi = 500,
-         conf.int = TRUE, conf.int.col = NULL, threshold.col = "red", threshold.lty = 2,
-         file.output = TRUE, verbose = TRUE,
-         width = 5, height = 3.5
+         plot.type = "q", 
+         col = color, 
+         box = FALSE, 
+         file = format, 
+         memo = name, 
+         dpi = 500,
+         conf.int = TRUE, 
+         conf.int.col = NULL, 
+         threshold.col = "red", 
+         threshold.lty = 2,
+         file.output = TRUE, 
+         verbose = TRUE,
+         width = 5, 
+         height = 3.5
   )
   print("Q-Q printed")
+}
+
+draw_mh <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
   print("MH printing...")
   CMplot(table,
          plot.type = "m", col = c("grey40", "grey70"), # chr colors
@@ -152,11 +180,12 @@ pheno_name <- args[1]
 file_pval <- args[2]
 clump <- str2bool(args[3])
 file_binary <- args[4]
+PLINK_PATH <- args[5]
 
 
 # file_path<- "../1000genomes/pipeline_utils"
-# pheno_name <- "O14"
-# file_pval <- "data/O14.gwas.imputed_v3.both_sexes.qassoc"
+# pheno_name <- "M06"
+# file_pval <- "data/M06.gwas.imputed_v3.both_sexes.qassoc"
 # clump <- TRUE
 # file_binary <- "../1000genomes/data3/PATTERN_filt_sim"
         
@@ -180,6 +209,14 @@ max_pval <- ceiling(max_pval)
 # p-value cut off for significant SNPs
 cutoff <-  0.05/nrow(table)
 
+draw_qq(table[,c('snp', 'chr', 'pos', 'pval')],
+           pheno_name,
+           "pdf",
+           color,
+           NULL,
+           NULL,
+           max_pval)
+
 
 print('getting markers...')
 ##  getting array of boolean: markers to sign: ##
@@ -195,25 +232,14 @@ if(clump){
                           file_pval, " ", 
                           cutoff, " ",
                           R2, " ",
-                          WINDOW, " ")
+                          WINDOW, " ",
+                          PLINK_PATH,  " ")
     
     print(get_clumped)
     system(get_clumped)
     
-    
-    SNPs <- tryCatch(
-        {
-            CLUMP_FILE = paste0(file_binary, '_clumps.txt')
-            SNPs <- read.table(CLUMP_FILE, header = T, sep = "\t")
-            SNPs <- SNPs$SNP
-            print('Markers clumped')
-            return(SNPs)
-        }, error=function(e) {
-            return(NULL)
-        }, warning=function(e) {
-            return(NULL)
-        }
-    )
+    SNPs <- try_read_file(file_pval, CLUMP_FILE)
+
     if(is.null(SNPs)){
             clump <- FALSE
     }
@@ -244,9 +270,8 @@ if (! clump){
 }
     
                       
-print('Evth done for drawing!')
 
-draw_mhplot_qq(table[,c('snp', 'chr', 'pos', 'pval')],
+draw_mh(table[,c('snp', 'chr', 'pos', 'pval')],
            pheno_name,
            "pdf",
            color,

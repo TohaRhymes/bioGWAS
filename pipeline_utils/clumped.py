@@ -16,10 +16,11 @@ PFILE=sys.argv[2]
 PVAL_CUTOFF=float(sys.argv[3])
 R2=float(sys.argv[4])
 KB=int(sys.argv[5])
-OFILE=os.path.splitext(BFILE)[0]+'_clumps'
+OFILE=os.path.splitext(PFILE)[0]+'_clumps'
+PLINK_PATH=sys.argv[6]
 
 
-command_clump = f"""plink \
+command_clump = f"""{PLINK_PATH} \
 --bfile {BFILE} \
 --allow-no-sex \
 --clump {PFILE} \

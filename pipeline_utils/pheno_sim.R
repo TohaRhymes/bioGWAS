@@ -6,15 +6,19 @@ if (!require("PhenotypeSimulator")) install.packages("PhenotypeSimulator")  #0.3
 library(PhenotypeSimulator)
 
 # args<-c("./", 
-# 	"data2/chr_ph_ss_K10_filt_sim_snps",
-# 	"data2/chr_ph_ss_K10_m0.5_sd0.3_gv0.5_h2s0.5_phenos.tsv",
-# 	"5000", 
-# 	"10", 
-# 	"0.5", 
-# 	"0.5", 
-# 	"1.0",
+# "/media/MIRROR/ukb_finngen/gwassim_check/gwas_comparison/out_data/SIM_I9_filt_sim_snps",
+# "/media/MIRROR/ukb_finngen/gwassim_check/gwas_comparison/out_data/SIM_I9_S3_phenos.tsv",
+# 	"1000", 
+# "/media/MIRROR/ukb_finngen/gwassim_check/gwas_comparison/out_data/SIM_I9_chosen_snps.tsv", 
+# 	"0.05", 
+# 	"0.001", 
+# 	"0.5",
+#        "1.0",
+#        "1.0",
+#        "0.0",
+#        "1.0",
 #        "0.5",
-#        "0.3")
+#        "566")
 #	/home/achangalidi/ukb_finngen/1000genomes chr_EUR_sim_snps phenos.tsv 5000 20 0.5 0.5 0.5
 
 
@@ -22,7 +26,12 @@ WD <- args[1]
 geno_file <- args[2]
 pheno_file <- args[3]
 N_samples <- as.numeric(args[4])
-N_genes <-as.numeric(args[5])
+N_genes_file <-args[5]
+
+N_genes <- nrow(read.table(N_genes_file, header = F, sep = "\t"))
+
+print(N_samples)
+print(N_genes)
 
 mBeta <- as.numeric(args[6])
 sdBeta <- as.numeric(args[7])
@@ -41,8 +50,10 @@ alpha <- as.numeric(args[13])
 
 seed <- as.numeric(args[14])
 if (is.na(seed)){
-    seed <- 219453
+    seed <- 566
 }
+
+seed <- 1488
 
 if(genVar==0){
   h2s <- NULL

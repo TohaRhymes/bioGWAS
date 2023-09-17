@@ -1,6 +1,7 @@
 import yaml
 import os
 from pathlib import Path
+import pandas as pd
 
 # ===================================
 # UTIL FUNCTIONS
@@ -20,7 +21,14 @@ def remove_ext(full_path: str):
 # READING CONFIGURATION
 # ===================================
 
-configfile: "config.yaml"
+
+BIOGWAS_PATH = config['biogwas_path']
+
+PLINK_PATH = config['plink']
+PLINK2_PATH = config['plink2']
+BEDTOOLS_PATH = config['bedtools']
+HAPGEN2_PATH = config['hapgen2']
+
     
 VCF_IN_DIR = config['vcf_in_dir']
 DATA_DIR = config['data_dir']
@@ -118,6 +126,7 @@ rule all:
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
         filt_anno_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
+        chosen_snps=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv"),
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
         phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos.tsv"),
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv"),
@@ -135,7 +144,7 @@ rule filter_vcf:
     output:
         vcf=temp("{file}_filt.vcf")
     shell:
-        f'''plink2 --vcf {{input.vcf}} \
+        f'''{PLINK2_PATH} --vcf {{input.vcf}} \
         --max-alleles 2 \
         --maf {MAF_FILTER} \
         --keep {IDS_FILE}  \
@@ -157,9 +166,9 @@ rule haps_legend_map_bfile:
     params:
         data="{file}_filt"
     shell:
-        f"""plink2 --vcf {{input.filt_vcf}} --export ped  --out {{params.data}}
-        plink2  --vcf {{input.filt_vcf}}  --export hapslegend  --out {{params.data}}
-        plink2  --vcf {{input.filt_vcf}}  --set-all-var-ids @:#  --make-bed  --out {{params.data}}"""
+        f"""{PLINK2_PATH} --vcf {{input.filt_vcf}} --export ped  --out {{params.data}}
+        {PLINK2_PATH}  --vcf {{input.filt_vcf}}  --export hapslegend  --out {{params.data}}
+        {PLINK2_PATH}  --vcf {{input.filt_vcf}}  --set-all-var-ids @:#  --make-bed  --out {{params.data}}"""
         
         
 
@@ -178,7 +187,7 @@ rule hapgen2:
         data="{file}_filt"
     shell:
         f"""
-        hapgen2 \
+        {HAPGEN2_PATH} \
         -h {{input.filt_haps}} \
         -l {{input.filt_legend}} \
         -m {{input.filt_map}} \
@@ -239,7 +248,7 @@ rule make_bed_from_hapgen2:
         data="{file}_filt_sim"
     shell:
         f"""
-         plink2 \
+         {PLINK2_PATH} \
          --data {{params.data_}} ref-first \
          --make-bed \
          --out {{params.data}}
@@ -260,7 +269,7 @@ rule merge_chroms:
         data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
     shell:
         f"""
-        plink2 \
+        {PLINK2_PATH} \
         --pmerge-list {{input.chrom_list}} bfile \
         --set-all-var-ids @:# \
         --make-bed \
@@ -281,7 +290,7 @@ rule recode_merged:
         CAUSAL_MAF_MAX=CAUSAL_MAF_MAX 
     shell:
         f"""
-        plink2 --bfile {{params.data}} \
+        {PLINK2_PATH} --bfile {{params.data}} \
         --recode vcf \
         --maf {{params.CAUSAL_MAF_MIN}} \
         --max-maf {{params.CAUSAL_MAF_MAX}} \
@@ -297,7 +306,7 @@ rule transform_gtf:
         filt_gtf=temp(os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf"))
     shell:
         f"""
-        ./pipeline_utils/script_make_gtf.sh {{input.gtf}} {{output.filt_gtf}}
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/script_make_gtf.sh')} {{input.gtf}} {{output.filt_gtf}}
         """
         
         
@@ -311,7 +320,7 @@ rule annotate_vcf:
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
     shell:
         f"""
-        ./pipeline_utils/bedtools_closest.sh {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}}
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/bedtools_closest.sh')} {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}} {BEDTOOLS_PATH}
         """        
         
             
@@ -353,7 +362,7 @@ rule get_snps_list:
     run:
         if SNPS_PROVIDED:
             shell(f"""
-            ./pipeline_utils/get_snps_by_snps.py \
+            {os.path.join(BIOGWAS_PATH, './pipeline_utils/get_snps_by_snps.py')} \
             {{params.data_dir}} \
             {{params.pattern}} \
             {{params.pheno_pattern}} \
@@ -363,7 +372,7 @@ rule get_snps_list:
             """) 
         else:
             shell(f"""
-            ./pipeline_utils/get_snps_set.py \
+            {os.path.join(BIOGWAS_PATH, './pipeline_utils/get_snps_set.py')} \
             {{params.data_dir}} \
             {{params.pattern}} \
             {{params.pheno_pattern}} \
@@ -392,24 +401,23 @@ rule extract_snps:
         out_data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps"),
     shell:
         f"""
-        plink2 \
+        {PLINK2_PATH} \
         --bfile {{params.filt_sim_data}} \
         --extract range {{input.tsv}} \
         --make-bed --out {{params.out_data}}
         """   
-        
 
 
 rule pheno_sim:
     input:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.bed"),
         bim=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.bim"),
-        fam=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.fam")
+        fam=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps.fam"),
+        K_file=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
     output:
         tsv=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos.tsv")
     params:
         data_dir=DATA_DIR,
-        K=K,
         N=N,
         data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps"),
         M_BETA=M_BETA,
@@ -423,12 +431,12 @@ rule pheno_sim:
         SEED=SEED
     shell:
         f"""
-        ./pipeline_utils/pheno_sim.R \
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/pheno_sim.R')} \
         ./ \
         {{params.data}} \
         {{output.tsv}} \
         {{params.N}} \
-        {{params.K}} \
+        {{input.K_file}} \
         {{M_BETA}} \
         {{SD_BETA}} \
         {{GEN_VAR}} \
@@ -448,17 +456,19 @@ rule gwas:
         fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
         pheno=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos.tsv"),
     output:
-        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
+        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv"),
+        qassoc=temp(os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.qassoc"))
     params:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
         pheno=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos"),
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas")
     shell:
         f"""
-        ./pipeline_utils/gwas_analysis.sh \
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/gwas_analysis.sh')} \
         {{params.bed}} \
         {{params.pheno}} \
-        {{params.gwas}}
+        {{params.gwas}} \
+        {PLINK_PATH}
         """   
              
              
@@ -476,25 +486,31 @@ rule pca:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
     shell:
         f"""
-        ./pipeline_utils/calc_indep_snps_and_pca.sh \
-        {{params.bed}}
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/calc_indep_snps_and_pca.sh')} \
+        {{params.bed}} \
+        {PLINK2_PATH}
         """           
      
         
              
 rule draw_gwas:
     input:
-        gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
+        qassoc=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.qassoc"),
+        bed_file=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed")
     output:
         mh=os.path.join(IMAGES_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas_mh.pdf"),
         qq=os.path.join(IMAGES_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas_qq.pdf")
     params:
-        name=f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas"
+        name=f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas",
+        bfile=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim")
     shell:
         f"""
-        ./pipeline_utils/draw_pvals.R \
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pvals.R')} \
         {{params.name}} \
-        {{input.gwas}} 
+        {{input.qassoc}} \
+        TRUE \
+        {{params.bfile}} \
+        {PLINK_PATH}
    
         mv QQplot.pval_{{params.name}}.pdf {{output.qq}}
         mv Rectangular-Manhattan.pval_{{params.name}}.pdf {{output.mh}}
@@ -516,11 +532,11 @@ rule draw_pca:
         pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep")
     shell:
         f"""
-        ./pipeline_utils/draw_pca.py \
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pca.py')} \
         {{params.file}} \
         {{params.pdf}}
         
-        ./pipeline_utils/draw_pca.py \
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pca.py')} \
         {{params.file_indep}} \
         {{params.pdf_indep}}
         """   
