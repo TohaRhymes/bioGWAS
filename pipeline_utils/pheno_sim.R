@@ -53,8 +53,6 @@ if (is.na(seed)){
     seed <- 566
 }
 
-seed <- 1488
-
 if(genVar==0){
   h2s <- NULL
   pIndependentGenetic <- NULL
