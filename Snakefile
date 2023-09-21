@@ -148,8 +148,9 @@ rule init_vcf_bfile:
         fam="{file}.fam" if VCF_IN_FLAG else []
     shell:
         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
+        --max-alleles 2 \
         --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 5000 missing \
-        --make-bed  
+        --make-bed  \
         --out {{wildcards.file}}'''
         
         
@@ -164,8 +165,9 @@ rule init_bfile_bfile:
         bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}"))
     shell:
         f'''{PLINK2_PATH}  --bfile {{params.bed}} \
+        --max-alleles 2 \
         --set-all-var-ids @:#\$r,\$a --new-id-max-allele-len 5000 missing \
-        --make-bed  
+        --make-bed \
         --out {{wildcards.file}}
         '''
         
@@ -317,7 +319,7 @@ rule merge_chroms:
         f"""
         {PLINK2_PATH} \
         --pmerge-list {{input.chrom_list}} bfile \
-        --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 50000 missing \
+        --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 5000 missing \
         --make-bed \
         --out {{params.data}}
         """    
