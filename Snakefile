@@ -141,40 +141,42 @@ rule all:
 
 rule init_vcf_bfile:
     input:
-        vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf"))
+        vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf")) if VCF_IN_FLAG else []
     output:
-        bed="{file}.bed",
-        bim="{file}.bim",
-        fam="{file}.fam"
+        bed="{file}.bed" if VCF_IN_FLAG else [],
+        bim="{file}.bim" if VCF_IN_FLAG else [],
+        fam="{file}.fam" if VCF_IN_FLAG else []
     shell:
         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
-        --set-all-var-ids @:#  \
+        --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 5000 missing \
         --make-bed  
-        --out {{wildcards.file}}_filt'''
+        --out {{wildcards.file}}'''
         
         
 rule init_bfile_bfile:
     input:
-        vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.bed"))
+        vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.bed")) if not VCF_IN_FLAG else []
     output:
-        bed="{file}.bed",
-        bim="{file}.bim",
-        fam="{file}.fam",
-    data:
-        bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}.bed")),
-        bim=os.path.join(VCF_IN_DIR, os.path.basename("{file}.bim")),
-        fam=os.path.join(VCF_IN_DIR, os.path.basename("{file}.fam"))
+        bed="{file}.bed" if not VCF_IN_FLAG else [],
+        bim="{file}.bim" if not VCF_IN_FLAG else [],
+        fam="{file}.fam" if not VCF_IN_FLAG else []
+    params:
+        bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}"))
     shell:
-        f'''cp {{data.bed}} {{output.bed}}
-        cp {{data.bim}} {{output.bim}}
-        cp {{data.fam}} {{output.fam}}
+        f'''{PLINK2_PATH}  --bfile {{params.bed}} \
+        --set-all-var-ids @:#\$r,\$a --new-id-max-allele-len 5000 missing \
+        --make-bed  
+        --out {{wildcards.file}}
         '''
-  
+        
+        
+print(VCF_IN_FLAG)
 if VCF_IN_FLAG:
     ruleorder: init_vcf_bfile > init_bfile_bfile
 else:
     ruleorder: init_bfile_bfile > init_vcf_bfile
-
+        
+        
 
 
 
@@ -212,8 +214,7 @@ rule haps_legend_map_bfile:
         data="{file}_filt"
     shell:
         f"""{PLINK2_PATH} --bfile {{params.data}} --export ped  --out {{params.data}}
-        {PLINK2_PATH}  --bfile {{params.data}}  --export hapslegend  --out {{params.data}}
-        {PLINK2_PATH}  --bfile {{params.data}}  --set-all-var-ids @:#  --make-bed  --out {{params.data}}"""
+        {PLINK2_PATH}  --bfile {{params.data}}  --export hapslegend  --out {{params.data}}"""
         
         
 
@@ -237,7 +238,7 @@ rule hapgen2:
         -l {{input.filt_legend}} \
         -m {{input.filt_map}} \
         -o {{params.data}}_sim \
-        -dl $(head -1 {{input.filt_bim} | awk '{print $4}') 1 1.5 2.25 \
+        -dl $(head -1 {{input.filt_bim}} | awk '{{print $4}}') 1 1.5 2.25 \
         -int 0 500000000 \
         -n {N} 0 \
         -Ne 11418 \
@@ -316,7 +317,7 @@ rule merge_chroms:
         f"""
         {PLINK2_PATH} \
         --pmerge-list {{input.chrom_list}} bfile \
-        --set-all-var-ids @:# \
+        --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 50000 missing \
         --make-bed \
         --out {{params.data}}
         """    

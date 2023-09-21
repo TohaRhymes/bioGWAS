@@ -29,7 +29,7 @@ Or shortly:
 ./biogwas.py \
 -id data2  \
 -dd data3  \
--id images  \
+-imd images  \
 -vcf \
 -il  data2/chr.list \
 -if  data2/EUR_SAMPLES_ID.txt \
