@@ -1,0 +1,4 @@
+plink: /home/achangalidi/tools/plink/plink
+plink2: /home/achangalidi/tools/plink2
+bedtools: /usr/bin/bedtools
+hapgen2: /home/achangalidi/tools/hapgen2
