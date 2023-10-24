@@ -13,13 +13,34 @@ library("RColorBrewer")
 library("CMplot")
 library("dplyr")
 
-prepare_snp <- function(FILE) {
+# points settings
+CEX=0.7
+
+is_true_or_false <- function(check_var) {
+  args <- as.character(check_var)
+  
+  args <- toupper(check_var)
+  
+  if (check_var %in% c("1", "TRUE", "T")) {
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+prepare_snp <- function(FILE, delete_sex) {
   print('Reading table...')
   table <- read.table(FILE, header = T, sep = "\t")
   print('Table imported!')
-  
-  table$CHR[table$CHR == "X"] <- 23
-  table$CHR[table$CHR == "Y"] <- 24
+  if(delete_sex){
+      table <- table[table$CHR != 23,]
+      table <- table[table$CHR != 24,]
+      table <- table[table$CHR != "X",]
+      table <- table[table$CHR != "Y",]
+  }else{
+      table$CHR[table$CHR == "X"] <- 23
+      table$CHR[table$CHR == "Y"] <- 24
+  }
   
   snp <- table$SNP
   chr <- as.numeric(table$CHR)
@@ -122,15 +143,16 @@ draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
          box = FALSE, 
          file = format, 
          memo = name, 
-         dpi = 500,
+         dpi = 40,
          conf.int = TRUE, 
          conf.int.col = NULL, 
          threshold.col = "red", 
          threshold.lty = 2,
+         cex=CEX,
          file.output = TRUE, 
          verbose = TRUE,
-         width = 5, 
-         height = 3.5
+         width = 7, 
+         height = 5
   )
   print("Q-Q printed")
 }
@@ -142,29 +164,35 @@ draw_mh <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
          highlight = SNPs,
          highlight.text = genes,
          highlight.col = c("#fb8072"),
-         highlight.cex = 1, highlight.pch = c(16),
-         LOG10 = TRUE, ylim = c(0, max_pval), # limits of log pval
+         highlight.cex = CEX, 
+         highlight.pch = c(16),
+         cex=CEX,
+         LOG10 = TRUE, 
+         ylim = c(0, max_pval), # limits of log pval
          threshold = c(0.05 / nrow(table), 1e-4), # cut-offs of pval
          threshold.lty = c(1, 2), threshold.lwd = c(1, 1),
          threshold.col = c("black", "grey"), # threshold colors
          amplify = TRUE, chr.den.col = NULL,
          signal.col = c("#fb8072", "#b3de69"), # colors of significant
-         signal.cex = c(1.5, 1.5), signal.pch = c(19, 19),
+         signal.cex = c(CEX+1, CEX+1), 
+         signal.pch = c(19, 19),
          file = format, # file format
          memo = name, # file postfix
-         dpi = 500, file.output = TRUE, verbose = TRUE,
-         width = 14, height = 5
+         dpi = 40, 
+         file.output = TRUE, 
+         verbose = TRUE,
+         width = 14, 
+         height = 5
   )
   print("MH printed")
 }
 
 
-args = commandArgs(trailingOnly=FALSE)
-
-
 colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
 color <- sample(colors, 1)
 
+
+args = commandArgs(trailingOnly=FALSE)
 
 file_path = ""
 for (arg in args){
@@ -181,18 +209,30 @@ file_pval <- args[2]
 clump <- str2bool(args[3])
 file_binary <- args[4]
 PLINK_PATH <- args[5]
+delete_sex <- args[6]
 
-
-# file_path<- "../1000genomes/pipeline_utils"
+# file_path <- "../../1000genomes/pipeline_utils"
 # pheno_name <- "M06"
 # file_pval <- "data/M06.gwas.imputed_v3.both_sexes.qassoc"
 # clump <- TRUE
 # file_binary <- "../1000genomes/data3/PATTERN_filt_sim"
+# PLINK_PATH <- "/home/achangalidi/tools/plink"
+# delete_sex <- TRUE
+
+
+if(is.na(delete_sex)){
+  delete_sex <- FALSE
+}else{
+  delete_sex <- is_true_or_false(delete_sex)
+}
+
+
+
         
 print(pheno_name)
 print(file_pval)
 
-table <- prepare_snp(file_pval)
+table <- prepare_snp(file_pval, delete_sex)
 
 head(table)
 
@@ -209,13 +249,6 @@ max_pval <- ceiling(max_pval)
 # p-value cut off for significant SNPs
 cutoff <-  0.05/nrow(table)
 
-draw_qq(table[,c('snp', 'chr', 'pos', 'pval')],
-           pheno_name,
-           "pdf",
-           color,
-           NULL,
-           NULL,
-           max_pval)
 
 
 print('getting markers...')
@@ -225,7 +258,6 @@ if(clump){
     R2 <- 0.1
     # loci interval (only one SNP with max pval will be signed)
     WINDOW <- 5000
-
         
     get_clumped <- paste0(file_path, "/./clumped.py ", 
                           file_binary, " ", 
@@ -269,7 +301,14 @@ if (! clump){
     
 }
     
-                      
+               
+draw_qq(table[,c('snp', 'chr', 'pos', 'pval')],
+           pheno_name,
+           "pdf",
+           color,
+           NULL,
+           NULL,
+           max_pval)       
 
 draw_mh(table[,c('snp', 'chr', 'pos', 'pval')],
            pheno_name,

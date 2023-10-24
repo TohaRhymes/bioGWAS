@@ -50,6 +50,7 @@ K = int(float(sys.argv[7]))
 k = int(float(sys.argv[8]))
 # ========================
 
+
 #included in bed file genes
 included_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_included_genes_snps.txt')
 # where to save gene causal geneset
@@ -69,11 +70,14 @@ included_genes.gene = included_genes.gene.apply(lambda x: extract_second(extract
 included_genes = included_genes[~included_genes.gene.isna()]
 included_genes = set(included_genes.gene.unique())
 
+print(f"[KEK]: {len(included_genes)}. gmt_file")
+
 
 # Read file with pathway-<genes> per line
 lines = []
 with open(gmt_file, 'r') as gmt:
     lines = list(map(lambda x: x.split('\t'), gmt.readlines()))
+    
 
 # Make dict key = pathway, value = set of genes 
 path2genes = defaultdict(str)
@@ -81,21 +85,33 @@ for l in lines:
     path2genes[l[0]] = set(map(lambda x: x.replace('\n', ''), l[2:]))
 path2genes = dict(path2genes)
 
+
+print(f"[KEK]: {len(path2genes)}")
+
+
 # For target pathways make set of target genes and set of other genes 
 target_genes = set(flatten([path2genes[target] for target in pathways])) & included_genes
 other_genes = set(flatten(path2genes.values())) & included_genes
 other_genes = list(other_genes-target_genes)
 target_genes = list(target_genes)
 
-target_genes = random.sample(target_genes, k=k)
-other_genes = random.sample(other_genes, k=K-k)
-gene_set = target_genes+other_genes
+target_function = random.sample
+if len(target_genes) < k:
+    target_function = random.choices
+target_genes = target_function(target_genes, k=k)
+
+other_function = random.sample
+if len(other_genes) < K-k:
+    other_function = random.choices
+other_genes = other_function(other_genes, k=K-k)
+
+gene_set = list(set(target_genes+other_genes))
 print('Genes were chose!')
 
-while len(gene_set) != K:
-    target_genes = random.sample(target_genes, k=k)
-    other_genes = random.sample(other_genes, k=K-k)
-    gene_set = target_genes+other_genes
+# while len(gene_set) != K:
+#     target_genes = random.sample(target_genes, k=k)
+#     other_genes = random.sample(other_genes, k=K-k)
+#     gene_set = target_genes+other_genes
 
     
 print(f'Chosen target genes: {target_genes}')

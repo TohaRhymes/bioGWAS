@@ -139,84 +139,123 @@ rule all:
 
 
 
+# rule init_vcf_bfile:
+#     input:
+#         vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf")) if VCF_IN_FLAG else []
+#     output:
+#         bed="{file}.bed" if VCF_IN_FLAG else [],
+#         bim="{file}.bim" if VCF_IN_FLAG else [],
+#         fam="{file}.fam" if VCF_IN_FLAG else []
+#     shell:
+#         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
+#         --keep-allele-order \
+#         --max-alleles 2 \
+#         --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing \
+#         --make-bed  \
+#         --out {{wildcards.file}}'''
+
+
 rule init_vcf_bfile:
     input:
-        vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf")) if VCF_IN_FLAG else []
+        vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf"))
     output:
-        bed="{file}.bed" if VCF_IN_FLAG else [],
-        bim="{file}.bim" if VCF_IN_FLAG else [],
-        fam="{file}.fam" if VCF_IN_FLAG else []
+        bed=temp("{file}_filt.vcf")
     shell:
         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
+        --keep-allele-order \
         --max-alleles 2 \
-        --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 5000 missing \
-        --make-bed  \
-        --out {{wildcards.file}}'''
-        
-        
-rule init_bfile_bfile:
-    input:
-        vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.bed")) if not VCF_IN_FLAG else []
-    output:
-        bed="{file}.bed" if not VCF_IN_FLAG else [],
-        bim="{file}.bim" if not VCF_IN_FLAG else [],
-        fam="{file}.fam" if not VCF_IN_FLAG else []
-    params:
-        bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}"))
-    shell:
-        f'''{PLINK2_PATH}  --bfile {{params.bed}} \
-        --max-alleles 2 \
-        --set-all-var-ids @:#\$r,\$a --new-id-max-allele-len 5000 missing \
-        --make-bed \
-        --out {{wildcards.file}}
-        '''
-        
-        
-print(VCF_IN_FLAG)
-if VCF_IN_FLAG:
-    ruleorder: init_vcf_bfile > init_bfile_bfile
-else:
-    ruleorder: init_bfile_bfile > init_vcf_bfile
-        
-        
-
-
-
-rule filter_bfile:
-    input:
-        bed="{file}.bed",
-        bim="{file}.bim",
-        fam="{file}.fam"
-    output:
-        filt_bed="{file}_filt.bed",
-        filt_bim="{file}_filt.bim",
-        filt_fam="{file}_filt.fam"
-    params:
-        data="{file}"
-    shell:
-        f'''{PLINK2_PATH} --bfile {{params.data}} \
-        --max-alleles 2 \
+        --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing \
         --maf {MAF_FILTER} \
         --keep {IDS_FILE}  \
-        --make-bed \
-        --out {{params.data}}_filt'''
+        --recode vcf  \
+        --out {{wildcards.file}}_filt'''
         
+        
+# rule init_bfile_bfile:
+#     input:
+#         vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.bed")) if not VCF_IN_FLAG else []
+#     output:
+#         bed="{file}.bed" if not VCF_IN_FLAG else [],
+#         bim="{file}.bim" if not VCF_IN_FLAG else [],
+#         fam="{file}.fam" if not VCF_IN_FLAG else []
+#     params:
+#         bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}"))
+#     shell:
+#         f'''{PLINK2_PATH}  --bfile {{params.bed}} \
+#         --max-alleles 2 \
+#         --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing \
+#         --make-bed \
+#         --out {{wildcards.file}}
+#         '''
+        
+        
+# print(VCF_IN_FLAG)
+# if VCF_IN_FLAG:
+#     ruleorder: init_vcf_bfile > init_bfile_bfile
+# else:
+#     ruleorder: init_bfile_bfile > init_vcf_bfile
+        
+        
+
+
+
+# rule filter_bfile:
+#     input:
+#         bed="{file}.bed",
+#         bim="{file}.bim",
+#         fam="{file}.fam"
+#     output:
+#         filt_bed="{file}_filt.bed",
+#         filt_bim="{file}_filt.bim",
+#         filt_fam="{file}_filt.fam"
+#     params:
+#         data="{file}"
+#     shell:
+#         f'''{PLINK2_PATH} --bfile {{params.data}} \
+#         --max-alleles 2 \
+#         --maf {MAF_FILTER} \
+#         --keep {IDS_FILE}  \
+#         --make-bed \
+#         --out {{params.data}}_filt'''
+        
+
+        
+
+# rule haps_legend_map_bfile:
+#     input:
+#         filt_bed="{file}_filt.bed",
+#         filt_bim="{file}_filt.bim",
+#         filt_fam="{file}_filt.fam"
+#     output:
+#         filt_haps=temp("{file}_filt.haps"),
+#         filt_leg=temp("{file}_filt.legend"),
+#         filt_map=temp("{file}_filt.map"),
+#         filt_ped=temp("{file}_filt.ped")
+#     params:
+#         data="{file}_filt"
+#     shell:
+#         f"""{PLINK2_PATH} --bfile {{params.data}} --export ped  --out {{params.data}}
+#         {PLINK2_PATH}  --bfile {{params.data}}  --export hapslegend  --out {{params.data}}"""
+
 
 rule haps_legend_map_bfile:
     input:
-        filt_bed="{file}_filt.bed",
-        filt_bim="{file}_filt.bim",
-        filt_fam="{file}_filt.fam"
+        filt_bed="{file}_filt.vcf"
     output:
         filt_haps=temp("{file}_filt.haps"),
         filt_leg=temp("{file}_filt.legend"),
         filt_map=temp("{file}_filt.map"),
-        filt_ped=temp("{file}_filt.ped")
+        filt_ped=temp("{file}_filt.ped"),
+        filt_bed="{file}_filt.bed",
+        filt_bim="{file}_filt.bim",
+        filt_fam="{file}_filt.fam"
     params:
         data="{file}_filt"
     shell:
-        f"""{PLINK2_PATH} --bfile {{params.data}} --export ped  --out {{params.data}}
-        {PLINK2_PATH}  --bfile {{params.data}}  --export hapslegend  --out {{params.data}}"""
+        f"""{PLINK2_PATH} --vcf {{input.filt_bed}} --export ped  --out {{params.data}}
+        {PLINK2_PATH}  --vcf {{input.filt_bed}}  --export hapslegend  --out {{params.data}}
+        {PLINK2_PATH}  --vcf {{input.filt_bed}}  --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing  --make-bed --out {{params.data}}"""
+
         
         
 
@@ -240,7 +279,7 @@ rule hapgen2:
         -l {{input.filt_legend}} \
         -m {{input.filt_map}} \
         -o {{params.data}}_sim \
-        -dl $(head -1 {{input.filt_bim}} | awk '{{print $4}}') 1 1.5 2.25 \
+        -dl $(head -1 {{input.filt_bim}} | cut -f4) 1 1.5 2.25 \
         -int 0 500000000 \
         -n {N} 0 \
         -Ne 11418 \
@@ -319,7 +358,7 @@ rule merge_chroms:
         f"""
         {PLINK2_PATH} \
         --pmerge-list {{input.chrom_list}} bfile \
-        --set-all-var-ids @:#\$r:\$a --new-id-max-allele-len 5000 missing \
+        --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing \
         --make-bed \
         --out {{params.data}}
         """    

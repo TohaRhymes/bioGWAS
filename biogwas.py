@@ -114,7 +114,7 @@ if __name__ == '__main__':
                         required=True, 
                         type=str,
                         help='Path to the directory which will be used as a storage for output data.')
-    dir_settings.add_argument('-id', 
+    dir_settings.add_argument('-imd', 
                         '--img_dir', 
                         required=True, 
                         type=str,
@@ -164,7 +164,7 @@ if __name__ == '__main__':
                         '--causal_snps', 
                         required=False, 
                         type=str, 
-                        help='Path to the file with preselected SNPs (one SNP per line). Required when `--use_causal_snps` is set to True. The format is: <number of chrom>:<serial number of basepair>')
+                        help='Path to the file with preselected SNPs (one SNP per line). Required when `--use_causal_snps` is set to True. The format is: <chrom>:<serial number of basepair>')
     # MAF FILTERS
     maf_settings = parser.add_argument_group('maf settings')
     maf_settings.add_argument('-maf', 

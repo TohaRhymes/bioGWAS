@@ -19,7 +19,6 @@ library(PhenotypeSimulator)
 #        "1.0",
 #        "0.5",
 #        "566")
-#	/home/achangalidi/ukb_finngen/1000genomes chr_EUR_sim_snps phenos.tsv 5000 20 0.5 0.5 0.5
 
 
 WD <- args[1]
@@ -39,7 +38,7 @@ sdBeta <- as.numeric(args[7])
 genVar <- as.numeric(args[8]) # noiseVar = 1-genVar 
 
 # Genetic
-h2s <- as.numeric(args[9]) # доля от генвар, которую составля.т эффекты моих снипов
+h2s <- as.numeric(args[9]) # a fraction of the genvar that the effects of my snips are.
 pIndependentGenetic <- as.numeric(args[10]) #proportion of genetic variant effects to have a trait-independent fixed effect
 theta  <- as.numeric(args[11]) #  proportion of variance of shared genetic variant effects
 

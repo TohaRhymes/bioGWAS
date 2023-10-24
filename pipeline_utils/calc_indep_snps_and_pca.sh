@@ -7,7 +7,7 @@ PLINK2_PATH=$2
 # Make independent set of SNPs
 ${PLINK2_PATH} \
 --bfile ${BFILE_IN} \
---indep-pairwise 1000kb 1 0.8 \
+--indep-pairwise 1000kb 1 0.2 \
 --out ${BFILE_IN}_indep
 
 ${PLINK2_PATH} \
@@ -20,8 +20,7 @@ rm ${BFILE_IN}_indep.prune.in
 rm ${BFILE_IN}_indep.prune.out
 
 # Make PCA on independent and full sets of SNPS
-${PLINK2_PATH} --bfile ${BFILE_IN}_indep --pca 10 approx --out ${BFILE_IN}_indep
+${PLINK2_PATH} --bfile ${BFILE_IN}_indep --pca 10 --out ${BFILE_IN}_indep
 
-${PLINK2_PATH} --bfile ${BFILE_IN} --pca 10 approx --out ${BFILE_IN}
-
+${PLINK2_PATH} --bfile ${BFILE_IN} --pca 10 --out ${BFILE_IN}
 

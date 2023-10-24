@@ -102,3 +102,19 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+
+
+
+# Specials
+/1khg_data
+!/.ipynb_checkpoints
+!/.snakemake
+/_lsea
+/_other
+/data*
+/data*
+/images
+.*
+tests/3_pathways/data/variants.tsv
