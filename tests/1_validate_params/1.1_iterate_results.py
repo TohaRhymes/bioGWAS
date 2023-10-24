@@ -31,11 +31,17 @@ def get_snps(line):
 
 # In[24]:
 
+DATA_DIR = "data3"
+PATTERN = "PAT"
+CAUSAL_ID = "ph_K{}"
+SIM_ID = "m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}_theta{theta}_pIndep{pIndep}_phi{phi}_alpha{alpha}"
 
-CAUSAL_SNP_FILE = "data3/PAT_ph_K{}_chosen_snps.tsv"
-GWAS_FILE = "data3/PAT_ph_K{}_m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}_theta{theta}_pIndep{pIndep}_phi{phi}_alpha{alpha}_gwas.tsv"
-FILE_RESULTS="data3/PAT_ph_compare_results.tsv"
-BFILE="data3/PAT_filt_sim"
+
+res_CAUSAL_ID = CAUSAL_ID.replace("_K{}", "")
+CAUSAL_SNP_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
+GWAS_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
+FILE_RESULTS=os.path.join(DATA_DIR, f"{PATTERN}_{res_CAUSAL_ID}_compare_results.tsv")
+BFILE=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
 # ## Params for one K
 
 # In[4]:
@@ -203,6 +209,8 @@ for param in tqdm(params):
                     clumps_causal.append(key)
                     causal_found.append(snp)
                     break
+        clumps_causal = set(clumps_causal)
+        causal_found = set(causal_found)
         clumps_not_causal = set(snp2list.keys()) - set(clumps_causal)
         causal_not_found = causal_set - set(causal_found)
 
