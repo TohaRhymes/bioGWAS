@@ -1,6 +1,2 @@
 PhenotypeSimulator==0.3.4
-svMisc==1.2.3
-ggplot2==3.3.5
-RColorBrewer==1.1.2
 CMplot==4.2.0
-dplyr==1.0.7
