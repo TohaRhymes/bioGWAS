@@ -17,11 +17,11 @@ library("dplyr")
 CEX=0.7
 
 is_true_or_false <- function(check_var) {
-  args <- as.character(check_var)
+  check_var_ <- as.character(check_var)
   
-  args <- toupper(check_var)
+  check_var_ <- toupper(check_var_)
   
-  if (check_var %in% c("1", "TRUE", "T")) {
+  if (check_var_ %in% c("1", "TRUE", "T")) {
     return(TRUE)
   } else {
     return(FALSE)
