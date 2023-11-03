@@ -1,17 +1,9 @@
 #!/usr/bin/env Rscript
 
 
-if (!requireNamespace("svMisc", quietly = TRUE)) install.packages("svMisc")
-if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
-if (!requireNamespace("RColorBrewer", quietly = TRUE)) install.packages("RColorBrewer")
 if (!requireNamespace("CMplot", quietly = TRUE)) install.packages("CMplot")
-if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
 
-library("svMisc")
-library("ggplot2")
-library("RColorBrewer")
 library("CMplot")
-library("dplyr")
 
 # points settings
 CEX=0.7
