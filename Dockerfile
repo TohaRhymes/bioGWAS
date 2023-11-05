@@ -1,8 +1,6 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9.12-slim
 
-# Set the working directory in the container
-WORKDIR /usr/src/bioGWAS
 
 # Install system dependencies for R
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -38,13 +36,11 @@ RUN wget https://s3.amazonaws.com/plink2-assets/alpha5/plink2_linux_x86_64_20231
     && unzip plink2_linux_x86_64_20231030.zip \
     && mv plink2 /usr/local/bin/
 
-# Write paths to dependencies.yml
-RUN echo "plink1_path: /usr/local/bin/plink" > dependencies.yml \
-    && echo "plink2_path: /usr/local/bin/plink2" >> dependencies.yml \
-    && echo "bedtools_path: /usr/local/bin/bedtools" >> dependencies.yml \
-    && echo "hapgen2_path: /usr/local/bin/hapgen2" >> dependencies.yml
-   
-RUN ls -la
+# Write paths to dependencies.yaml
+RUN echo "plink: /usr/local/bin/plink" > dependencies.yaml \
+    && echo "plink2: /usr/local/bin/plink2" >> dependencies.yaml \
+    && echo "bedtools: /usr/local/bin/bedtools" >> dependencies.yaml \
+    && echo "hapgen2: /usr/local/bin/hapgen2" >> dependencies.yaml
 
 # Clone the desired GitHub repository
 RUN apt-get install -y --no-install-recommends git \
@@ -62,3 +58,4 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Define the data directory as a volume
 VOLUME /data
+

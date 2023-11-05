@@ -1,0 +1,28 @@
+version: '3.8' 
+
+services:
+  bioGWAS:  
+    image: biogwas  
+    build: 
+      context: . 
+      dockerfile: Dockerfile 
+    command: >
+      /bioGWAS/biogwas.py
+      -d /dependencies.yml
+      -id "/data/1000genomes/data2"
+      -dd "/data/gwassim_check/attempt_docker/data"
+      -imd "/data/gwassim_check/attempt_docker/images"
+      --vcf_in_flag
+      -il "/data/1000genomes/data2/chr.list"
+      -if "/data/1000genomes/data2/EUR_SAMPLES_ID.txt"
+      -af "/data/1000genomes/data2/gencode.v37.annotation.gtf"
+      --gmt_file "/data/1000genomes/data2/h.all.v2023.1.Hs.symbols.gmt"
+      --causal_pathways "/data/1000genomes/data2/pathways.csv"
+      -p "dpat"
+      -cid "dcid"
+      -sid "dsid"
+    volumes:
+      - "/media/MIRROR/ukb_finngen:/data" 
+
+volumes:
+  my_data:  
