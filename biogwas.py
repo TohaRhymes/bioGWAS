@@ -57,7 +57,8 @@ seed: {args.seed}
      --nolock \
      -s {os.path.join(path, "Snakefile")} \
      --configfile {config} \
-     --cores {args.threads}'
+     --cores {args.threads} \
+     --directory {os.path.abspath(args.data_dir)}'
     print(command)
     subprocess.call(command, shell=True)
     
