@@ -14,7 +14,7 @@ To make this tool working, you need:
 
 Example of launching simulation:
 
-```
+```bash
 ./biogwas.py \
 --input_dir data2  \
 --data_dir data3  \
@@ -32,7 +32,7 @@ Example of launching simulation:
 
 Or shortly:
 
-```
+```bash
 ./biogwas.py \
 -id data2  \
 -dd data3  \
@@ -51,9 +51,64 @@ Or shortly:
 
 Full list of parameters with its description and default values can be found here:
 
-```
+```bash
 ./biogwas.py --help
 ```
+
+# Launch with Docker
+
+In order to build image use Docker file:
+```bash
+docker build -t biogwas .
+```
+
+
+After that you can easily run our tool using `docker-compose`. Example of configuration is in `docker-compose.yaml` file. You have to change:
+
+```
+volumes:
+  - "/media/MIRROR/ukb_finngen:/data" 
+```
+
+To point to the working dir.
+
+Also you have to work with the command part:
+```
+command: >
+/bioGWAS/biogwas.py
+-d /dependencies.yml
+-id "/data/1000genomes/data2"
+-dd "/data/gwassim_check/attempt_docker/data"
+-imd "/data/gwassim_check/attempt_docker/images"
+--vcf_in_flag
+-il "/data/1000genomes/data2/chr.list"
+-if "/data/1000genomes/data2/EUR_SAMPLES_ID.txt"
+-af "/data/1000genomes/data2/gencode.v37.annotation.gtf"
+--gmt_file "/data/1000genomes/data2/h.all.v2023.1.Hs.symbols.gmt"
+--causal_pathways "/data/1000genomes/data2/pathways.csv"
+-p "dpat"
+-cid "dcid"
+-sid "dsid"
+```
+
+You have to leave first three strings as they are:
+```
+command: >
+/bioGWAS/biogwas.py
+-d /dependencies.yml
+```
+
+All other parameters should be changed to your settings. 
+
+Note: not all settings and flags are shown here, to display the full list, change all parameters to: 
+```
+command: >
+/bioGWAS/biogwas.py
+--help
+```
+
+After editing `docker-compose.yaml`, run simulation using command: `docker-compose up`
+
 
 
 # Examples
