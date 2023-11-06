@@ -21,7 +21,7 @@ sed '1{ s/CHR/chr/; s/SNP/rsid/; s/BP/pos/; s/NMISS/n/; s/BETA/beta/; s/SE/se/; 
 # Convert qassoc to tsv-file
 
 awk '{$1=$1};1' ${SUMSTAT_OUT}.qassoc | tr -s ' ' '\t' > ${SUMSTAT_OUT}_.qassoc
-rm ${SUMSTAT_OUT}.qassoc
+rm -f ${SUMSTAT_OUT}.qassoc
 mv ${SUMSTAT_OUT}_.qassoc ${SUMSTAT_OUT}.qassoc
 
 

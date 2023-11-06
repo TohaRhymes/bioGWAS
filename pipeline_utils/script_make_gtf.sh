@@ -17,5 +17,5 @@ awk -F'\t' -v OFS='\t' '$3=="gene"{split($9,a,";"); split(a[1],b," "); split(a[3
 # sort by positions
 sort -k1,1n -k4,4n ${GTF_MID_SEL}  > ${GTF_OUT}
 
-rm ${GTF_MID}
-rm ${GTF_MID_SEL}
+rm -f ${GTF_MID}
+rm -f ${GTF_MID_SEL}

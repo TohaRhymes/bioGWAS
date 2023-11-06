@@ -301,7 +301,7 @@ rule postprocess_hapgen2:
         data="{file}_filt_sim"
     shell:
         f"""
-        rm {{params.data}}.cases.*
+        rm -f {{params.data}}.cases.*
         rename 's,sim\.controls,sim,' {{params.data}}.controls.*
         """        
 

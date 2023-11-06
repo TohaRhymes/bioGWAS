@@ -7,7 +7,7 @@ Human GWAS data simulator.
 
 To make this tool working, you need:
 * `Python 3.9` (+ packages are listed in `requirements.txt`, installation: `pip install -r requirements.txt`)
-*  `R 4.1` (+ packages are listed in `requirements-R.txt`, quick installation: `install_r_reqs.R`)
+* `R 4.1` (+ packages are listed in `requirements-R.txt`, quick installation: `install_r_reqs.R`)
 * `PLINK`, `PLINK2`, `bedtools` and `HAPGEN2` be installed. Pathes to these tools have to be presented in `dependencies.yaml` (use `-d` parameter to specify). The example is in `dependencies.yaml` file.
 
 # Launch
@@ -107,7 +107,10 @@ command: >
 --help
 ```
 
-After editing `docker-compose.yaml`, run simulation using command: `docker-compose up`
+After editing `docker-compose.yaml`, run simulation using command: 
+```bash
+docker-compose up
+```
 
 
 
