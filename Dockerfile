@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
     r-base \
     r-base-dev \
-    rename
+    rename \
+    bc
 
 # Download and install bedtools
 RUN apt-get install -y --no-install-recommends wget \
