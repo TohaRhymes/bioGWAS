@@ -112,6 +112,10 @@ After editing `docker-compose.yaml`, run simulation using command:
 docker-compose up
 ```
 
+You can also go inside container (not recommended):
+```bash
+docker run --rm -it --entrypoint /bin/bash biogwas
+```
 
 
 # Examples

@@ -1,25 +1,7 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
-if (!require("PhenotypeSimulator")) install.packages("PhenotypeSimulator")  #0.3.4
-
 library(PhenotypeSimulator)
-
-# args<-c("./", 
-# "/media/MIRROR/ukb_finngen/gwassim_check/gwas_comparison/out_data/SIM_I9_filt_sim_snps",
-# "/media/MIRROR/ukb_finngen/gwassim_check/gwas_comparison/out_data/SIM_I9_S3_phenos.tsv",
-# 	"1000", 
-# "/media/MIRROR/ukb_finngen/gwassim_check/gwas_comparison/out_data/SIM_I9_chosen_snps.tsv", 
-# 	"0.05", 
-# 	"0.001", 
-# 	"0.5",
-#        "1.0",
-#        "1.0",
-#        "0.0",
-#        "1.0",
-#        "0.5",
-#        "566")
-
 
 WD <- args[1]
 geno_file <- args[2]
