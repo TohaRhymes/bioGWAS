@@ -5,7 +5,7 @@
 
 
 import pandas as pd
-import tabix
+## import tabix
 import numpy as np
 import os
 import glob
