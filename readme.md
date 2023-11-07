@@ -55,15 +55,59 @@ Full list of parameters with its description and default values can be found her
 ./biogwas.py --help
 ```
 
-# Launch with Docker
+# Docker
 
 In order to build image use Docker file:
 ```bash
 docker build -t biogwas .
 ```
 
+### Launch from CLI
 
-After that you can easily run our tool using `docker-compose`. Example of configuration is in `docker-compose.yaml` file. You have to change:
+After that you can easily run docker by:
+```bash
+docker run \
+-v "/media/MIRROR/ukb_finngen:/data" \
+biogwas \
+/bioGWAS/biogwas.py \
+-d /dependencies.yaml \
+-id "/data/1000genomes/data2" \
+-dd "/data/gwassim_check/attempt_docker/data" \
+-imd "/data/gwassim_check/attempt_docker/images" \
+--vcf_in_flag \
+-il "/data/1000genomes/data2/chr.list" \
+-if "/data/1000genomes/data2/EUR_SAMPLES_ID.txt" \
+-af "/data/1000genomes/data2/gencode.v37.annotation.gtf" \
+--gmt_file "/data/1000genomes/data2/h.all.v2023.1.Hs.symbols.gmt" \
+--causal_pathways "/data/1000genomes/data2/pathways.csv" \
+-p "dpat" \
+-cid "dcid" \
+-sid "dsid"
+```
+
+Your parameters goes after 5th string, i.e. you have to leave first 5 strings as they are:
+```bash
+docker run \
+-v "/media/MIRROR/ukb_finngen:/data" \
+biogwas \
+/bioGWAS/biogwas.py \
+-d /dependencies.yaml
+```
+
+All other flags can be changed. To read manual, simply run:
+
+```bash
+docker run \
+-v "/media/MIRROR/ukb_finngen:/data" \
+biogwas \
+/bioGWAS/biogwas.py \
+--help
+```
+
+
+### Launch with docker-compose.yaml
+
+Alternatively you can launch bioGWAS using `docker-compose`. Example of configuration is in `docker-compose.yaml` file. You have to change:
 
 ```
 volumes:
