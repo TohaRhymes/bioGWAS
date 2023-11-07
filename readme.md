@@ -76,7 +76,7 @@ Also you have to work with the command part:
 ```
 command: >
 /bioGWAS/biogwas.py
--d /dependencies.yml
+-d /dependencies.yaml
 -id "/data/1000genomes/data2"
 -dd "/data/gwassim_check/attempt_docker/data"
 -imd "/data/gwassim_check/attempt_docker/images"
@@ -95,7 +95,7 @@ You have to leave first three strings as they are:
 ```
 command: >
 /bioGWAS/biogwas.py
--d /dependencies.yml
+-d /dependencies.yaml
 ```
 
 All other parameters should be changed to your settings. 

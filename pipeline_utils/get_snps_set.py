@@ -50,6 +50,8 @@ K = int(float(sys.argv[7]))
 k = int(float(sys.argv[8]))
 # ========================
 
+print("SNPs selection...")
+
 
 #included in bed file genes
 included_genes_file = os.path.join(data_dir, f'{pattern}_{pheno_pattern}_included_genes_snps.txt')
@@ -70,7 +72,9 @@ included_genes.gene = included_genes.gene.apply(lambda x: extract_second(extract
 included_genes = included_genes[~included_genes.gene.isna()]
 included_genes = set(included_genes.gene.unique())
 
-print(f"[KEK]: {len(included_genes)}. gmt_file")
+assert len(included_genes) > 0,  "Genes from pathway are not presented in genetic files. Check your input, or write us: https://github.com/TohaRhymes/bioGWAS."
+
+print(f"Amount of genes from pathway in dataset: {len(included_genes)}.")
 
 
 # Read file with pathway-<genes> per line
@@ -85,8 +89,9 @@ for l in lines:
     path2genes[l[0]] = set(map(lambda x: x.replace('\n', ''), l[2:]))
 path2genes = dict(path2genes)
 
+assert len(path2genes) > 0,  "Genes from pathway are not presented in genetic files. Check your input, or write us: https://github.com/TohaRhymes/bioGWAS."
 
-print(f"[KEK]: {len(path2genes)}")
+print(f"Amount of genes from selected pathway: {len(path2genes)}")
 
 
 # For target pathways make set of target genes and set of other genes 
@@ -97,25 +102,27 @@ target_genes = list(target_genes)
 
 target_function = random.sample
 if len(target_genes) < k:
+    print("Since the number of genes in the target pathways is less than k, sampling with replacement is used to chose causal genes.")
     target_function = random.choices
+else:
+    print("Sampling without replacement is used to chose causal genes.")
 target_genes = target_function(target_genes, k=k)
 
 other_function = random.sample
 if len(other_genes) < K-k:
+    print("Since the number of genes not from the target pathways is less than K-k, sampling with replacement is used to chose other genes.")
     other_function = random.choices
+else:
+    print("Sampling without replacement is used to chose other genes.")
 other_genes = other_function(other_genes, k=K-k)
 
 gene_set = list(set(target_genes+other_genes))
-print('Genes were chose!')
-
-# while len(gene_set) != K:
-#     target_genes = random.sample(target_genes, k=k)
-#     other_genes = random.sample(other_genes, k=K-k)
-#     gene_set = target_genes+other_genes
-
+list_genes = target_genes+other_genes
+print(f'{K} causal genes are chosen:')
     
-print(f'Chosen target genes: {target_genes}')
-print(f'Chosen other genes: {other_genes}')
+print(f'{k} target genes: {target_genes}')
+print(f'{K-k} other genes: {other_genes}')
+
 
 with open(causal_genes_file, 'w') as f:
     for x in gene_set[:-1]:
@@ -123,20 +130,34 @@ with open(causal_genes_file, 'w') as f:
     f.write(f"{gene_set[-1]}")
 
     
-print("Chosing these specific genes in file...")
+print("Chosing these specific genes in genotypes file...")
 # chose this specific genes in file
 bash_command = f"value=$(tail -n 1 {vcf_file} | awk '{{print NF}}') ; col=$(echo $value-3 | bc) ; grep -w -f <(cut -f 1 {causal_genes_file}) {vcf_file} | cut -f 1,2,4,$col > {annotated_snps_file}"
 print(bash_command)
 process = subprocess.Popen(bash_command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
 output, error = process.communicate()
 
-print("Finishing")
+print("Chosing SNPs from these genes")
 snps = pd.read_csv(annotated_snps_file, sep='\t', names=['chr', 's', 'e', 'gene'], header=None)
 snps.gene = snps.gene.apply(lambda x: extract_substrings(x))
 snps = snps.groupby('s').agg({'chr':'first', 'e' : 'first', 'gene' : 'first'}).reset_index()[['chr', 's', 'e', 'gene']].sort_values(by=['chr', 's'])
 
-snps = snps.groupby('gene').apply(lambda x: choose_random_row(x)).reset_index(drop=True)
-snps.e = snps.s+snps.e.apply(lambda x: len(x)-1)
-snps = snps.sort_values(['chr', 's'])
-snps.to_csv(selected_snps_file, header=False, index=False, sep='\t')
-print(f'Succesfully saved to {selected_snps_file}')
+# Sample SNP per gene in list of genes (row by row)
+sampled_snps = pd.DataFrame(columns=snps.columns)
+selected_indices = set()
+for gene in list_genes:
+    # Use not selected rows
+    available_rows = snps[(snps['gene'] == gene) & (~snps.index.isin(selected_indices))]
+    # If there are no available rows left for the gene -- continue to the next gene
+    if available_rows.empty:
+        continue
+    sampled_row = available_rows.sample(n=1)
+    selected_indices.update(sampled_row.index)
+    sampled_snps = pd.concat([sampled_snps, sampled_row], ignore_index=True)
+
+
+sampled_snps.e = sampled_snps.s+sampled_snps.e.apply(lambda x: len(x)-1)
+print(f"Selected SNPs: {sampled_snps.shape}")
+sampled_snps = sampled_snps.sort_values(['chr', 's'])
+sampled_snps.to_csv(selected_snps_file, header=False, index=False, sep='\t')
+print(f'Succesfully saved to {selected_snps_file}.')
