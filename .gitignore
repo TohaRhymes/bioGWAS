@@ -118,3 +118,6 @@ venv.bak/
 /images
 .*
 tests/3_pathways/data/variants.tsv
+/tests/data/chr*.vcf
+/tests/data/*.gtf
+/tests/data/*.ssv
