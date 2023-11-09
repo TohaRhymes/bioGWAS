@@ -16,15 +16,15 @@ Example of launching simulation:
 
 ```bash
 ./biogwas.py \
---input_dir data2  \
---data_dir data3  \
---img_dir images  \
+--input_dir <input_data_dir>  \
+--data_dir <output_data_dir>  \
+--img_dir <output_images_dir>  \
 --vcf_in_flag \
---input_list  data2/chr.list \
---ids_file  data2/EUR_SAMPLES_ID.txt \
---anno_file data2/gencode.v37.annotation.gtf \
---gmt_file data2/h.all.v2023.1.Hs.symbols.gmt  \
---causal_pathways data2/pathways.csv \
+--input_list  <path_to_genofile_list>.list \
+--ids_file  <path_to_samples_list>.txt \
+--anno_file <path_to_gtf>.gtf \
+--gmt_file <path_to_gmt>.gmt  \
+--causal_pathways <path_to_pathways>.csv \
 --pattern PATTERN  \
 --causal_id CAUSAL_ID  \
 --sim_id SIM_ID 
@@ -34,15 +34,15 @@ Or shortly:
 
 ```bash
 ./biogwas.py \
--id data2  \
--dd data3  \
--imd images  \
+-id <input_data_dir>  \
+-dd <output_data_dir>  \
+-imd <output_images_dir>  \
 -vcf \
--il  data2/chr.list \
--if  data2/EUR_SAMPLES_ID.txt \
--af data2/gencode.v37.annotation.gtf \
--gf data2/h.all.v2023.1.Hs.symbols.gmt  \
--cp data2/pathways.csv \
+-il  <path_to_genofile_list>.list \
+-if  <path_to_samples_list>.txt \
+-af <path_to_gtf>.gtf \
+-gf <path_to_gmt>.gmt  \
+-cp <path_to_pathways>.csv \
 -p PATTERN  \
 -cid CAUSAL_ID  \
 -sid SIM_ID 
@@ -71,15 +71,15 @@ docker run \
 biogwas \
 /bioGWAS/biogwas.py \
 -d /dependencies.yaml \
--id "/data/1000genomes/data2" \
--dd "/data/gwassim_check/attempt_docker/data" \
--imd "/data/gwassim_check/attempt_docker/images" \
---vcf_in_flag \
--il "/data/1000genomes/data2/chr.list" \
--if "/data/1000genomes/data2/EUR_SAMPLES_ID.txt" \
--af "/data/1000genomes/data2/gencode.v37.annotation.gtf" \
---gmt_file "/data/1000genomes/data2/h.all.v2023.1.Hs.symbols.gmt" \
---causal_pathways "/data/1000genomes/data2/pathways.csv" \
+-id <input_data_dir_inside_container>  \
+-dd <output_data_dir_inside_container>  \
+-imd <output_images_dir_inside_container>  \
+-vcf \
+-il  <path_to_genofile_list_inside_container>.list \
+-if  <path_to_samples_list_inside_container>.txt \
+-af <path_to_gtf_inside_container>.gtf \
+-gf <path_to_gmt_inside_container>.gmt  \
+-cp <path_to_pathways_inside_container>.csv \
 -p "dpat" \
 -cid "dcid" \
 -sid "dsid"
@@ -94,7 +94,7 @@ biogwas \
 -d /dependencies.yaml
 ```
 
-All other flags can be changed. To read manual, simply run:
+All other flags can be changed. To read manual, simply run with flag `--help`:
 
 ```bash
 docker run \
@@ -111,25 +111,25 @@ Alternatively you can launch bioGWAS using `docker-compose`. Example of configur
 
 ```
 volumes:
-  - "/media/MIRROR/ukb_finngen:/data" 
+  - "<path_to_workdir>:<path_inside_container>" 
 ```
 
 To point to the working dir.
 
-Also you have to work with the command part:
+You have to work with the command part:
 ```
 command: >
 /bioGWAS/biogwas.py
 -d /dependencies.yaml
--id "/data/1000genomes/data2"
--dd "/data/gwassim_check/attempt_docker/data"
--imd "/data/gwassim_check/attempt_docker/images"
---vcf_in_flag
--il "/data/1000genomes/data2/chr.list"
--if "/data/1000genomes/data2/EUR_SAMPLES_ID.txt"
--af "/data/1000genomes/data2/gencode.v37.annotation.gtf"
---gmt_file "/data/1000genomes/data2/h.all.v2023.1.Hs.symbols.gmt"
---causal_pathways "/data/1000genomes/data2/pathways.csv"
+-id <input_data_dir_inside_container>  \
+-dd <output_data_dir_inside_container>  \
+-imd <output_images_dir_inside_container>  \
+-vcf \
+-il  <path_to_genofile_list_inside_container>.list \
+-if  <path_to_samples_list_inside_container>.txt \
+-af <path_to_gtf_inside_container>.gtf \
+-gf <path_to_gmt_inside_container>.gmt  \
+-cp <path_to_pathways_inside_container>.csv \
 -p "dpat"
 -cid "dcid"
 -sid "dsid"
