@@ -4,64 +4,15 @@ from itertools import product
 import subprocess
 from pprint import pprint
 
-# try these m_betas
-m_betas = (
-    0.05,
-    0.5)
-# use these sd for m_betas above respectively
-sd_betas = (
-    (0.001, 0.01),
-    (0.05, 0.2),
-)
-
-Ks = [
-     10,
-    30
-]
-
-assert len(m_betas) == len(sd_betas)
-# make products
-m_sd_comb = []
-for mb, sds in zip(m_betas, sd_betas):
-    m_sd_comb += list(product([mb], sds))
-# for every of combinations above, use these genvar and sd
-gen_vars = (0, 0.1, 0.5, 0.9, 1)
-h2ss = (1.0,)
-gv_h2s_comb = list(product(gen_vars, h2ss))
+from utils_1 import params, Ks
 
 
-theta_pIndep_comb = [(0,1), (0.5, 0.5), (1, 0)]
-
-phi_alpha_comb = [(1, 0), (1, 0.5)]
-
-print("These combinations of m and sd:")
-pprint(m_sd_comb)
-print("These combinations of gv and h2s:")
-pprint(gv_h2s_comb)
-print("These combinations of theta and pIndep:")
-pprint(theta_pIndep_comb)
-print("These combinations of phi and alpha:")
-pprint(phi_alpha_comb)
-
-params = [
-    {"m_beta": m, 
-     "sd_beta": sd, 
-     "gen_var": gv, 
-     "h2s": h2s, 
-     "theta": theta, 
-     "pIndep": pIndep, 
-     "phi":phi, 
-     "alpha":alpha}
-    for (m, sd), 
-    (gv, h2s), 
-    (theta, pIndep), 
-    (phi, alpha) in list(product(m_sd_comb, 
-                                           gv_h2s_comb, 
-                                           theta_pIndep_comb,
-                                           phi_alpha_comb))
-]
+# Params for one K -- imported from utils_1.py
 pprint(params)
 print(f"Amount of parameters sets: {len(params)}")
+# Ks itself
+pprint(Ks)
+print(f"Amount of Ks: {len(Ks)}")
 
 for K in Ks:
     k = K // 2
@@ -70,29 +21,44 @@ for K in Ks:
         m_beta = param["m_beta"]
         sd_beta = param["sd_beta"]
         gen_var = param["gen_var"]
-        h2s = param["h2s"]
+        alpha = param["alpha"]
         theta = param["theta"]
         pIndep = param["pIndep"]
-        phi = param["phi"]
-        alpha = param["alpha"]
-        causal_id = f"ph_K{K}"
-        sim_id = f"m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}_theta{theta}_pIndep{pIndep}_phi{phi}_alpha{alpha}"
-        command = f"snakemake \
-        --cores 8 \
-        --config \
-        m_beta={m_beta} \
-        sd_beta={sd_beta} \
-        gen_var={gen_var} \
-        h2s={h2s} \
-        theta={theta} \
-        pIndep={pIndep} \
-        phi={phi} \
-        alpha={alpha} \
-        K={K} \
-        k={k} \
-        draw_flag={False} \
-        sim_id={sim_id} \
-        causal_id={causal_id}"
+        
+        pat = "test1"
+        cas_id = f"K{K}"
+        sim_id = f"m{m_beta}_sd{sd_beta}_gv{gen_var}_alpha{alpha}_theta{theta}_pIndep{pIndep}"
+        
+        command = f"""docker run \
+        -v /media/DATA/gwasim/round2/bioGWAS/tests:/wd \
+        biogwas \
+        /bioGWAS/biogwas.py \
+        --dependencies /dependencies.yaml \
+        --threads 8 \
+        --input_dir /wd/data \
+        --data_dir /wd/1_validate_params/data \
+        --img_dir /wd/1_validate_params/images \
+        --vcf_in_flag \
+        --input_list  /wd/data/chr.list \
+        --ids_file  /wd/data/EUR_SAMPLES_ID.txt \
+        --anno_file /wd/data/gencode.v37.annotation.gtf \
+        --gmt_file /wd/data/c2.cp.kegg.v2023.1.Hs.symbols.gmt \
+        --causal_pathways /wd/data/pathways.csv \
+        --maf_filter 0.05 \
+        --N 1000 \
+        --m_beta {m_beta} \
+        --sd_beta {sd_beta} \
+        --gen_var {gen_var} \
+        --alpha {alpha} \
+        --theta {theta} \
+        --p_independent_genetic {pIndep} \
+        --K {K} \
+        --k {k} \
+        --no-draw_flag \
+        --pattern {pat} \
+        --causal_id {cas_id}  \
+        --sim_id {sim_id} \
+        """
         print(command)
         process = subprocess.Popen(
              command, stdout=subprocess.PIPE, shell=True, executable="/bin/bash"
