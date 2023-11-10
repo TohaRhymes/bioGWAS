@@ -139,15 +139,19 @@ output, error = process.communicate()
 
 print("Chosing SNPs from these genes")
 snps = pd.read_csv(annotated_snps_file, sep='\t', names=['chr', 's', 'e', 'gene'], header=None)
+# gene = <gene_id>_<gene_name>; gene_name = <gene_name>; 
 snps.gene = snps.gene.apply(lambda x: extract_substrings(x))
-snps = snps.groupby('s').agg({'chr':'first', 'e' : 'first', 'gene' : 'first'}).reset_index()[['chr', 's', 'e', 'gene']].sort_values(by=['chr', 's'])
+snps['gene_name']= snps.gene.apply(lambda x: x.split('_')[-1])
+snps = snps.groupby('s').agg({'chr':'first', 'e' : 'first', 'gene' : 'first', 'gene_name': 'first'}).reset_index()[['chr', 's', 'e', 'gene', 'gene_name']].sort_values(by=['chr', 's'])
+
+
 
 # Sample SNP per gene in list of genes (row by row)
 sampled_snps = pd.DataFrame(columns=snps.columns)
 selected_indices = set()
 for gene in list_genes:
     # Use not selected rows
-    available_rows = snps[(snps['gene'] == gene) & (~snps.index.isin(selected_indices))]
+    available_rows = snps[(snps['gene_name'] == gene) & (~snps.index.isin(selected_indices))]
     # If there are no available rows left for the gene -- continue to the next gene
     if available_rows.empty:
         continue
@@ -155,6 +159,7 @@ for gene in list_genes:
     selected_indices.update(sampled_row.index)
     sampled_snps = pd.concat([sampled_snps, sampled_row], ignore_index=True)
 
+sampled_snps = sampled_snps.drop(['gene_name'], axis=1)
 
 sampled_snps.e = sampled_snps.s+sampled_snps.e.apply(lambda x: len(x)-1)
 print(f"Selected SNPs: {sampled_snps.shape}")

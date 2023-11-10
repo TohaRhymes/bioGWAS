@@ -67,7 +67,7 @@ docker build -t biogwas .
 After that you can easily run docker by:
 ```bash
 docker run \
--v "/media/MIRROR/ukb_finngen:/data" \
+-v "<work_dir>:<work_dir_inside_container>" \
 biogwas \
 /bioGWAS/biogwas.py \
 -d /dependencies.yaml \
@@ -88,7 +88,7 @@ biogwas \
 Your parameters goes after 5th string, i.e. you have to leave first 5 strings as they are:
 ```bash
 docker run \
--v "/media/MIRROR/ukb_finngen:/data" \
+-v "<work_dir>:<work_dir_inside_container>" \
 biogwas \
 /bioGWAS/biogwas.py \
 -d /dependencies.yaml
@@ -98,7 +98,7 @@ All other flags can be changed. To read manual, simply run with flag `--help`:
 
 ```bash
 docker run \
--v "/media/MIRROR/ukb_finngen:/data" \
+-v "<work_dir>:<work_dir_inside_container>" \
 biogwas \
 /bioGWAS/biogwas.py \
 --help
