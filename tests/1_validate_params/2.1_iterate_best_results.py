@@ -13,6 +13,10 @@ from tqdm import tqdm
 
 import glob
 
+
+
+from utils_2 import VALIDATION_COMPARISON, IDs, CAUSAL_SNP_FILE, GWAS_FILE, FILE_RESULTS, BFILE
+
 def extract_digit_after_seed(input_string, seed='seed'):
     pattern = f"{re.escape(seed)}(\d+)_gwas"
     match = re.search(pattern, input_string)
@@ -39,21 +43,9 @@ def get_snps(line):
         return list(map(lambda x: re.sub('\([\d]+\)', '', x), line.split(',')))
 
 
-DATA_DIR = "data3"
-PATTERN = "PAT"
-CAUSAL_ID = "ph_best_K{}"
-SIM_ID = "m{m_beta}_sd{sd_beta}_gv{gen_var}_h2s{h2s}_theta{theta}_pIndep{pIndep}_phi{phi}_alpha{alpha}_seed{seed}"
-
-
-res_CAUSAL_ID = CAUSAL_ID.replace("_K{}", "")
-CAUSAL_SNP_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
-GWAS_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
-FILE_RESULTS=os.path.join(DATA_DIR, f"{PATTERN}_{res_CAUSAL_ID}_compare_results.tsv")
-BFILE=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
-
 print(f"Summary will be saved at: {FILE_RESULTS}")
 
-snps = pd.read_csv('data3/_PAT_ph_compare_results.tsv', sep='\t').drop(['clumps_not_causal', 'causal_not_found'], axis=1)
+snps = pd.read_csv(VALIDATION_COMPARISON, sep='\t').drop(['clumps_not_causal', 'causal_not_found'], axis=1)
 snps['F1']=2/(1/snps.clumps_causal+1/snps.causal_found)
 snps = snps[snps.F1 > 0.9]
 params = snps.T.to_dict()
@@ -70,17 +62,17 @@ for param_key in tqdm(params):
     param = params[param_key]
     K = int(float(param["K"]))
     k = K // 2
+    
     m_beta = param["m_beta"]
     sd_beta = param["sd_beta"]
     gen_var = param["gen_var"]
-    h2s = param["h2s"]
+    alpha = param["alpha"]
     theta = param["theta"]
     pIndep = param["pIndep"]
-    phi = param["phi"]
-    alpha = param["alpha"]
+    
     param['seed']="*"
-    causal_snp_file = CAUSAL_SNP_FILE.format(K)
-    gwas_file_pattern = GWAS_FILE.format(K, **param)
+    causal_snp_file = CAUSAL_SNP_FILE.format(**{'K':K})
+    gwas_file_pattern = GWAS_FILE.format(**{'K':K}, **param)
     gwas_files = {extract_digit_after_seed(f):f for f in glob.glob(gwas_file_pattern)}
     
     # SET OF CAUSAL SNPS
@@ -96,15 +88,16 @@ for param_key in tqdm(params):
             N = sum(1 for _ in f) - 1
 
         # make clump file
-        FILE = gwas_file.replace('.tsv', '')
+        FILE_IN = gwas_file.replace('.tsv', '')
+        FILE_OUT = FILE_IN + '_clump'
         PVAL_CUTOFF = 0.05/N
         KB = 1000
 
         try:
-            clumps_data = pd.read_fwf(f"{FILE}.clumped", sep='\t')
+            clumps_data = pd.read_fwf(f"{FILE_OUT}.clumped", sep='\t')
         except FileNotFoundError:
-            command_format = f"""sed '1{{ s/chr/CHR/; s/rsid/SNP/; s/pos/BP/; s/n/NMISS/; s/beta/BETA/; s/se/SE/; s/r2/R2/; s/t/T/; s/pval/P/;}}' {FILE}.tsv | awk '{{$1=$1}};1'| tr -s ' ' '\t' > {FILE}.qassoc"""
-            command_clump = f"""plink         --bfile {BFILE}         --allow-no-sex         --clump {FILE}.qassoc         --clump-p1 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-p2 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-r2 0.2         --clump-kb {KB}         --out {FILE}"""
+            command_format = f"""sed '1{{ s/chr/CHR/; s/rsid/SNP/; s/pos/BP/; s/n/NMISS/; s/beta/BETA/; s/se/SE/; s/r2/R2/; s/t/T/; s/pval/P/;}}' {FILE_IN}.tsv | awk '{{$1=$1}};1'| tr -s ' ' '\t' > {FILE_IN}.qassoc"""
+            command_clump = f"""plink         --bfile {BFILE}         --allow-no-sex         --clump {FILE_IN}.qassoc         --clump-p1 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-p2 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-r2 0.2         --clump-kb {KB}         --out {FILE_OUT}"""
             print(command_format)
             run(command_format)
             print(command_clump)
@@ -113,7 +106,7 @@ for param_key in tqdm(params):
 
             # read clump file and make list of snps for every clump
             try:
-                clumps_data = pd.read_fwf(f"{FILE}.clumped", sep='\t')
+                clumps_data = pd.read_fwf(f"{FILE_OUT}.clumped", sep='\t')
             except FileNotFoundError:
                 results = {"K": K, 
                 **param,

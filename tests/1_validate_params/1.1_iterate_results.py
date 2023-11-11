@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from utils_1 import params, Ks
+from utils_1 import params, Ks, CAUSAL_SNP_FILE, GWAS_FILE, FILE_RESULTS, BFILE
 
 def run(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
@@ -31,21 +31,7 @@ def get_snps(line):
         return list(map(lambda x: re.sub('\([\d]+\)', '', x), line.split(',')))
 
 
-DATA_DIR = "data"
-PATTERN = "test1"
-CAUSAL_ID = "K{K}"
-SIM_ID = "m{m_beta}_sd{sd_beta}_gv{gen_var}_alpha{alpha}_theta{theta}_pIndep{pIndep}"
-
-
-res_CAUSAL_ID = CAUSAL_ID.replace("_K{}", "")
-CAUSAL_SNP_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv")
-GWAS_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
-FILE_RESULTS=os.path.join(DATA_DIR, f"{PATTERN}_{res_CAUSAL_ID}_compare_results.tsv")
-BFILE=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
-
-
-
-
+    
 # Params for one K -- imported from utils_1.py
 pprint(params)
 print(f"Amount of parameters sets: {len(params)}")
@@ -66,8 +52,8 @@ for param in tqdm(params):
     theta = param["theta"]
     pIndep = param["pIndep"]
     for K in Ks:
-        causal_snp_file = CAUSAL_SNP_FILE.format(K)
-        gwas_file = GWAS_FILE.format(K, **param)
+        causal_snp_file = CAUSAL_SNP_FILE.format(**{'K':K})
+        gwas_file = GWAS_FILE.format(**{'K':K}, **param)
         # count number of snps
         with open(gwas_file, "rb") as f:
             N = sum(1 for _ in f) - 1
@@ -77,15 +63,16 @@ for param in tqdm(params):
         print(causal_set)
 
         # make clump file
-        FILE = gwas_file.replace('.tsv', '')
+        FILE_IN = gwas_file.replace('.tsv', '')
+        FILE_OUT = FILE_IN + '_clump'
         PVAL_CUTOFF = 0.05/N
         KB = 1000
 
         try:
-            clumps_data = pd.read_fwf(f"{FILE}.clumped", sep='\t')
+            clumps_data = pd.read_fwf(f"{FILE_OUT}.clumped", sep='\t')
         except FileNotFoundError:
-            command_format = f"""sed '1{{ s/chr/CHR/; s/rsid/SNP/; s/pos/BP/; s/n/NMISS/; s/beta/BETA/; s/se/SE/; s/r2/R2/; s/t/T/; s/pval/P/;}}' {FILE}.tsv | awk '{{$1=$1}};1'| tr -s ' ' '\t' > {FILE}.qassoc"""
-            command_clump = f"""plink         --bfile {BFILE}         --allow-no-sex         --clump {FILE}.qassoc         --clump-p1 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-p2 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-r2 0.2         --clump-kb {KB}         --out {FILE}"""
+            command_format = f"""sed '1{{ s/chr/CHR/; s/rsid/SNP/; s/pos/BP/; s/n/NMISS/; s/beta/BETA/; s/se/SE/; s/r2/R2/; s/t/T/; s/pval/P/;}}' {FILE_IN}.tsv | awk '{{$1=$1}};1'| tr -s ' ' '\t' > {FILE_IN}.qassoc"""
+            command_clump = f"""plink         --bfile {BFILE}         --allow-no-sex         --clump {FILE_IN}.qassoc         --clump-p1 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-p2 {'{:.30f}'.format(PVAL_CUTOFF)}         --clump-r2 0.2         --clump-kb {KB}         --out {FILE_OUT}"""
             print(command_format)
             run(command_format)
             print(command_clump)
@@ -94,7 +81,7 @@ for param in tqdm(params):
 
             # read clump file and make list of snps for every clump
             try:
-                clumps_data = pd.read_fwf(f"{FILE}.clumped", sep='\t')
+                clumps_data = pd.read_fwf(f"{FILE_OUT}.clumped", sep='\t')
             except FileNotFoundError:
                 results = {"K": K, 
                 **param,

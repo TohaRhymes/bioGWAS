@@ -4,7 +4,7 @@ from itertools import product
 import subprocess
 from pprint import pprint
 
-from utils_1 import params, Ks
+from utils_1 import params, Ks, IDs
 
 
 # Params for one K -- imported from utils_1.py
@@ -24,10 +24,10 @@ for K in Ks:
         alpha = param["alpha"]
         theta = param["theta"]
         pIndep = param["pIndep"]
-        
-        pat = "test1"
-        cas_id = f"K{K}"
-        sim_id = f"m{m_beta}_sd{sd_beta}_gv{gen_var}_alpha{alpha}_theta{theta}_pIndep{pIndep}"
+
+        pat = IDs['pattern']
+        cas_id = IDs['casual_id'].format(**{'K':K})
+        sim_id = IDs['sim_id'].format(**{'K':K}, **param)
         
         command = f"""docker run \
         -v /media/DATA/gwasim/round2/bioGWAS/tests:/wd \
