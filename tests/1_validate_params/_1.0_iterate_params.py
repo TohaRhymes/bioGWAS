@@ -4,7 +4,7 @@ from itertools import product
 import subprocess
 from pprint import pprint
 
-from utils_1 import params, Ks, IDs, N
+from utils_1_100 import params, Ks, IDs, N
 
 
 # Params for one K -- imported from utils_1.py
@@ -43,8 +43,7 @@ for K in Ks:
         --ids_file  /wd/data/EUR_SAMPLES_ID.txt \
         --anno_file /wd/data/gencode.v37.annotation.gtf \
         --gmt_file /wd/data/h.all.v2023.1.Hs.symbols.gmt \
-        --use_causal_snps \
-        --causal_snps /wd/data/pathways_{K}.csv \
+        --causal_pathways /wd/data/pathways_1.csv \
         --maf_filter 0.05 \
         --N {N} \
         --m_beta {m_beta} \

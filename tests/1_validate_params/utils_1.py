@@ -1,6 +1,8 @@
 from itertools import product
 from pprint import pprint
 
+import os
+
 
 # try these m_betas
 m_betas = (
@@ -58,11 +60,13 @@ Ks = [
     30
 ]
 
+N=10000
+
 # =============
 # bioGWAS ids
 # =============
-IDs = {'pattern': "test1",
-      'casual_id': "K{K}",
+IDs = {'pattern': "test10000",
+      'casual_id': "hallmark_K{K}",
       'sim_id': "m{m_beta}_sd{sd_beta}_gv{gen_var}_alpha{alpha}_theta{theta}_pIndep{pIndep}"}
 
 # =============
@@ -79,5 +83,9 @@ CAUSAL_SNP_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv
 GWAS_FILE = os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv")
 FILE_RESULTS=os.path.join(DATA_DIR, f"{PATTERN}_{res_CAUSAL_ID}_compare_results.tsv")
 BFILE=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
+
+
+
+VALIDATION_COMPARISON = 'data/aggregated_sim1.csv'
 
 
