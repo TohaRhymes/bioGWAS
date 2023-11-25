@@ -14,26 +14,10 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-from utils_1_100  import params, Ks, CAUSAL_SNP_FILE, GWAS_FILE, FILE_RESULTS, BFILE
+from utils_1  import params, Ks, CAUSAL_SNP_FILE, GWAS_FILE, FILE_RESULTS, BFILE
 
-def run(command):
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
-    output, error = process.communicate()
-    return output, error
+from utils import get_snps, run, flatten, get_ch_bp
 
-def flatten(l):
-    return [item for sublist in l for item in sublist]
-
-def get_ch_bp(x):
-    return ':'.join(x.split(":")[:2])
-
-def get_snps(line):
-    if line=='NONE':
-        return []
-    else:
-        full_list = list(map(lambda x: re.sub('\([\d]+\)', '', x), line.split(',')))
-        chr_bp_list = list(map(get_ch_bp, full_list))
-        return chr_bp_list
 
 
     

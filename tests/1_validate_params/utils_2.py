@@ -1,6 +1,53 @@
 import os
 
-N=10000
+
+from utils_1 import N, VALIDATION_COMPARISON
+from utils_1 import params as params_launch1
+
+import pandas as pd
+import numpy as np
+
+from collections import defaultdict
+
+from copy import deepcopy
+
+
+
+def top_n_with_ties(df, column, n=3):
+    top_n_values = df[column].nlargest(n).unique() 
+    return df[column].isin(top_n_values)
+
+
+param_names = list(params_launch1[0].keys())
+
+# select params we're going to iterate over the second time
+snps = pd.read_csv(VALIDATION_COMPARISON, sep=',')
+cols_for_flags = ['F1_avg', 
+                  'F1 (K=10)', 
+                  'F1 (K=20)', 
+                  'F1 (K=30)']
+Ks_for_cols = [[10,20,30], 
+               [10,], 
+               [20,], 
+               [30,]]
+flags = defaultdict(list)
+TOP_K=2
+
+for Ks, col in zip(Ks_for_cols, cols_for_flags):
+    for cur_K in Ks:
+        flags[cur_K].append(top_n_with_ties(snps, col, TOP_K))
+
+Ks_snps = []
+for cur_K in flags:
+    cur_snps = deepcopy(snps[np.any(flags[cur_K], axis=0)][param_names])
+    cur_snps['K']=cur_K
+    Ks_snps.append(cur_snps)
+snps = pd.concat(Ks_snps).reset_index()
+
+params = snps.T.to_dict()
+
+
+
 
 # =============
 # filenames
