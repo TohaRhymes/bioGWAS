@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
-
-INPUT_VCF=$1
-INPUT_GTF=$2
-OUTPUT_VCF=$3
-OUTPUT_TXT=$4
-BEDTOOLS_PATH=$5
-
-$BEDTOOLS_PATH closest -a ${INPUT_VCF} -b ${INPUT_GTF}  > ${OUTPUT_VCF}
+OUTPUT_VCF=$1
+OUTPUT_TXT=$2
 
 value=$(tail -n 1 ${OUTPUT_VCF} | awk '{print NF}')
 col=$(echo $value-3 | bc)

@@ -399,10 +399,19 @@ rule annotate_vcf:
         gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
+    shell:
+        f"""
+        {BEDTOOLS_PATH} closest -a  {{input.vcf}} -b {{input.gtf}} > {{output.vcf}}
+        """       
+        
+rule find_included:
+    input:
+        vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf")
+    output:
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
     shell:
         f"""
-        {os.path.join(BIOGWAS_PATH, './pipeline_utils/bedtools_closest.sh')} {{input.vcf}} {{input.gtf}} {{output.vcf}} {{output.included_txt}} {BEDTOOLS_PATH}
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/find_included.sh')} {{input.vcf}} {{output.included_txt}}
         """        
         
             
