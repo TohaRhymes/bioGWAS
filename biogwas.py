@@ -58,7 +58,7 @@ LOGO = """
 
 def main(path, args):
     with open(args.dependencies) as f:
-        d = f.read()
+        dep_yaml = f.read()
 
     snake_args = {
         "biogwas_path": {os.path.abspath(path)},
@@ -101,7 +101,7 @@ def main(path, args):
     config = os.path.abspath(args.config)
     print(config)
     with open(config, "w") as w:
-        w.write(d + "\n" + s)
+        w.write(dep_yaml + "\n" + snake_yaml)
 
     command = f'snakemake \
      --nolock \
