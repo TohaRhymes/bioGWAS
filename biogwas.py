@@ -61,41 +61,41 @@ def main(path, args):
         d = f.read()
 
     snake_args = {
-        biogwas_path: {os.path.abspath(path)},
-        vcf_in_dir: {os.path.abspath(args.input_dir)},
-        data_dir: {os.path.abspath(args.data_dir)},
-        images_dir: {os.path.abspath(args.img_dir)},
-        vcf_in_flag: {args.vcf_in_flag},
-        vcfs_list: {os.path.abspath(args.input_list)},
-        ids_file: {os.path.abspath(args.ids_file)},
-        anno_file: {os.path.abspath(args.anno_file)},
-        gmt_file: {os.path.abspath(args.gmt_file)},
-        use_causal_snps: {args.use_causal_snps},
-        causal_pathways: {
+        "biogwas_path": {os.path.abspath(path)},
+        "vcf_in_dir": {os.path.abspath(args.input_dir)},
+        "data_dir": {os.path.abspath(args.data_dir)},
+        "images_dir": {os.path.abspath(args.img_dir)},
+        "vcf_in_flag": {args.vcf_in_flag},
+        "vcfs_list": {os.path.abspath(args.input_list)},
+        "ids_file": {os.path.abspath(args.ids_file)},
+        "anno_file": {os.path.abspath(args.anno_file)},
+        "gmt_file": {os.path.abspath(args.gmt_file)},
+        "use_causal_snps": {args.use_causal_snps},
+        "causal_pathways": {
             os.path.abspath(args.causal_pathways)
             if args.causal_pathways is not None
             else ""
         },
-        causal_snps: {
+        "causal_snps": {
             os.path.abspath(args.causal_snps) if args.causal_snps is not None else ""
         },
-        maf_filter: {args.maf_filter},
-        causal_maf_min: {args.causal_maf_min},
-        causal_maf_max: {args.causal_maf_max},
-        N: {args.N},
-        K: {args.K},
-        k: {args.k},
-        m_beta: {args.m_beta},
-        sd_beta: {args.sd_beta},
-        gen_var: {args.gen_var},
-        p_independent_genetic: {args.p_independent_genetic},
-        theta: {args.theta},
-        alpha: {args.alpha},
-        pattern: {args.pattern},
-        causal_id: {args.causal_id},
-        sim_id: {args.sim_id},
-        draw_flag: {args.draw_flag},
-        seed: {args.seed},
+        "maf_filter": {args.maf_filter},
+        "causal_maf_min": {args.causal_maf_min},
+        "causal_maf_max": {args.causal_maf_max},
+        "N": {args.N},
+        "K": {args.K},
+        "k": {args.k},
+        "m_beta": {args.m_beta},
+        "sd_beta": {args.sd_beta},
+        "gen_var": {args.gen_var},
+        "p_independent_genetic": {args.p_independent_genetic},
+        "theta": {args.theta},
+        "alpha": {args.alpha},
+        "pattern": {args.pattern},
+        "causal_id": {args.causal_id},
+        "sim_id": {args.sim_id},
+        "draw_flag": {args.draw_flag},
+        "seed": {args.seed},
     }
     snake_yaml = SNAKE_YAML_TEMPLATE.format(**snake_args)
     config = os.path.abspath(args.config)
