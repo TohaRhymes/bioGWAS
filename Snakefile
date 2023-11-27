@@ -119,15 +119,10 @@ if DRAW_FLAG:
 rule all:
     priority: 1000
     input:
-        filt_bed=expand(os.path.join(DATA_DIR, "{file}_filt.bed"), file=files),
-        filt_bim=expand(os.path.join(DATA_DIR, "{file}_filt.bim"), file=files),
-        filt_fam=expand(os.path.join(DATA_DIR, "{file}_filt.fam"), file=files),
         filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         filt_sim_fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
-        filt_anno_vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
         chosen_snps=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_chosen_snps.tsv"),
-        included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
         phenos_tsv=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos.tsv"),
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv"),
         draw_output = draw_output
@@ -370,7 +365,7 @@ rule recode_merged:
         bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
         fam=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam"),
     output:
-        vcf=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"))
+        vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf")
     params:
         data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
         CAUSAL_MAF_MIN=CAUSAL_MAF_MIN,
@@ -390,7 +385,7 @@ rule transform_gtf:
     input:
         gtf=GTF_IN
     output:
-        filt_gtf=temp(os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf"))
+        filt_gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/script_make_gtf.sh')} {{input.gtf}} {{output.filt_gtf}}
