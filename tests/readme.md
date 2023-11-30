@@ -63,3 +63,36 @@ All datasets are located in `tests/2_simulate_gwas/data`:
 * Significant clumps in our simulation: `SIM_I9_S3_gwas_clumps.clumped` and `SIM_M06_S2_gwas_clumps.clumped`
 
 
+
+## 3. Enrichment analysis simulation 
+
+Directory: `tests/3_pathways`.
+
+#### Files
+
+* `0_path_pick.ipynb` - pick pathways for the analysis;
+* `1_iterate_pathways.py` - iterate through pathways and simulate GWAS datasets;
+* Launch MAGMA:
+    * `2.0_prepare_for_magma.sh` - prepare files for MAGMA;
+    * `2.1_iterate_magma.py` - make bash-scripts (in `magma_scripts` directory) to launch three models on all simulated data;
+    * `2.2_launch_ea.sh` - launch magma using scripts, prepared in previous file.
+* Launch Pascal (Pathway scoring algorithm):
+    * `3.0_mapping_rsid.py` - map simulated GWAS datasets' positions to rsids.
+    * `3.1_batch_pascal.sh` - launch Pascal.
+* Aggregation of all enrichment data: `4.0_pascal_process.ipynb` and `4.1_path_results.ipynb`
+    
+
+
+#### Images
+
+All images are located in `tests/3_pathways/images`:
+
+* `X`
+
+#### Data
+
+All datasets are located in `tests/3_pathways/data`:
+
+* `X`
+
+
