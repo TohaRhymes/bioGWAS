@@ -59,10 +59,27 @@ LOGO = """
 """
 
 
+def check_and_make_dir(dir_path):
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+        print(f"Directory {dir_path} created.")
+        
+        
+def launch_command(command):
+    print(command)
+    process = subprocess.Popen(
+         command, stdout=subprocess.PIPE, shell=True, executable="/bin/bash"
+    )
+    output, error = process.communicate()
+    print("\n=============================\nOUTPUT: \n", output)
+    print("\n=============================\nERRORS: \n", error)
+
+
 def main(path, args):
     with open(args.dependencies) as f:
         dep_yaml = f.read()
-
+        
+    # make parameters file to launch Snakemake
     snake_args = {
         "biogwas_path": os.path.abspath(path),
         "vcf_in_dir": os.path.abspath(args.input_dir),
@@ -95,19 +112,25 @@ def main(path, args):
         "seed": args.seed,
     }
     snake_yaml = SNAKE_YAML_TEMPLATE.format(**snake_args)
-    config = os.path.abspath(args.config)
-    print(config)
+    config = os.path.abspath(args.config)    
+    config_text = dep_yaml + "\n" + snake_yaml
     with open(config, "w") as w:
-        w.write(dep_yaml + "\n" + snake_yaml)
-
+        w.write(config_text)
+    print(f"Config was written to file {config}:")
+    print(config_text)
+    
+    # check dir and images path and create if needed
+    check_and_make_dir(snake_args["data_dir"])
+    check_and_make_dir(snake_args["images_dir"])
+    
+    #launch Snakemake
     command = f'snakemake \
      --nolock \
      -s {os.path.join(path, "Snakefile")} \
      --configfile {config} \
      --cores {args.threads} \
      --directory {os.path.abspath(args.data_dir)}'
-    print(command)
-    subprocess.call(command, shell=True)
+    launch_command(command)
 
     print(LOGO)
 
@@ -179,14 +202,14 @@ if __name__ == "__main__":
         "--input_list",
         required=True,
         type=str,
-        help="CSV-file that describes one input file per line with structure: <file>,<chromosome_number>. For plink bfiles, provide just name without extension.",
+        help="CSV-file that describes one input file per line with structure: <file>,<chromosome_number>. For plink bfiles, provide __just name__ without extension.",
     )
     input_settings.add_argument(
         "-if",
         "--ids_file",
         required=True,
         type=str,
-        help="File with samples ids' (from input files) to use for sampling (one id per line).",
+        help="File with samples ids (from input files) to use for sampling (one id per line).",
     )
     input_settings.add_argument(
         "-af",

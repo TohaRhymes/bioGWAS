@@ -14,6 +14,20 @@ To make this tool working, you need:
 
 # Launch
 
+The only __required__ parameters are:
+* `-id/--input_dir` - path to the directory which contains input genotypes.
+* `-il/--input_list` - csv-file that describes one input file per line with structure: `<file>,<chromosome_number>`.
+* `-if/--ids_file` - file with samples ids (from input files) to use for sampling (one id per line).
+* `-af/--anno_file` -- file with chromosome annotations in gtf-format.
+
+
+Full list of parameters with its description and default values can be found here:
+
+```bash
+./biogwas.py --help
+```
+
+
 Example of launching simulation:
 
 ```bash
@@ -50,12 +64,6 @@ Or shortly:
 -sid SIM_ID 
 ```
 
-
-Full list of parameters with its description and default values can be found here:
-
-```bash
-./biogwas.py --help
-```
 
 # Docker
 
