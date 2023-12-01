@@ -132,29 +132,11 @@ rule all:
 # RUN SIMULATION
 # ===================================
 
-
-
-# rule init_vcf_bfile:
-#     input:
-#         vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf")) if VCF_IN_FLAG else []
-#     output:
-#         bed="{file}.bed" if VCF_IN_FLAG else [],
-#         bim="{file}.bim" if VCF_IN_FLAG else [],
-#         fam="{file}.fam" if VCF_IN_FLAG else []
-#     shell:
-#         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
-#         --keep-allele-order \
-#         --max-alleles 2 \
-#         --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing \
-#         --make-bed  \
-#         --out {{wildcards.file}}'''
-
-
 rule init_vcf_bfile:
     input:
         vcf= lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.vcf"))
     output:
-        bed=temp("{file}_filt.vcf")
+        vcf=temp("{file}_filt.vcf")
     shell:
         f'''{PLINK2_PATH} --vcf {{input.vcf}} \
         --keep-allele-order \
@@ -164,74 +146,13 @@ rule init_vcf_bfile:
         --keep {IDS_FILE}  \
         --recode vcf  \
         --out {{wildcards.file}}_filt'''
+    message:
+        "Starting preparation of {input.vcf}: filter alleles and samples."
+    onsuccess:
+        "Successfully filtered {input.vcf} alleles and samples. Result is available in {output.vcf}."
+    onerror:
+        "Error in init_vcf_bfile. Possible reasons: problems with MAF or sample filters. Check PLINK requirements if this happened. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
-        
-# rule init_bfile_bfile:
-#     input:
-#         vcf=lambda wildcards: os.path.join(VCF_IN_DIR, os.path.basename(f"{wildcards.file}.bed")) if not VCF_IN_FLAG else []
-#     output:
-#         bed="{file}.bed" if not VCF_IN_FLAG else [],
-#         bim="{file}.bim" if not VCF_IN_FLAG else [],
-#         fam="{file}.fam" if not VCF_IN_FLAG else []
-#     params:
-#         bed=os.path.join(VCF_IN_DIR, os.path.basename("{file}"))
-#     shell:
-#         f'''{PLINK2_PATH}  --bfile {{params.bed}} \
-#         --max-alleles 2 \
-#         --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing \
-#         --make-bed \
-#         --out {{wildcards.file}}
-#         '''
-        
-        
-# print(VCF_IN_FLAG)
-# if VCF_IN_FLAG:
-#     ruleorder: init_vcf_bfile > init_bfile_bfile
-# else:
-#     ruleorder: init_bfile_bfile > init_vcf_bfile
-        
-        
-
-
-
-# rule filter_bfile:
-#     input:
-#         bed="{file}.bed",
-#         bim="{file}.bim",
-#         fam="{file}.fam"
-#     output:
-#         filt_bed="{file}_filt.bed",
-#         filt_bim="{file}_filt.bim",
-#         filt_fam="{file}_filt.fam"
-#     params:
-#         data="{file}"
-#     shell:
-#         f'''{PLINK2_PATH} --bfile {{params.data}} \
-#         --max-alleles 2 \
-#         --maf {MAF_FILTER} \
-#         --keep {IDS_FILE}  \
-#         --make-bed \
-#         --out {{params.data}}_filt'''
-        
-
-        
-
-# rule haps_legend_map_bfile:
-#     input:
-#         filt_bed="{file}_filt.bed",
-#         filt_bim="{file}_filt.bim",
-#         filt_fam="{file}_filt.fam"
-#     output:
-#         filt_haps=temp("{file}_filt.haps"),
-#         filt_leg=temp("{file}_filt.legend"),
-#         filt_map=temp("{file}_filt.map"),
-#         filt_ped=temp("{file}_filt.ped")
-#     params:
-#         data="{file}_filt"
-#     shell:
-#         f"""{PLINK2_PATH} --bfile {{params.data}} --export ped  --out {{params.data}}
-#         {PLINK2_PATH}  --bfile {{params.data}}  --export hapslegend  --out {{params.data}}"""
-
 
 rule haps_legend_map_bfile:
     input:
@@ -250,6 +171,9 @@ rule haps_legend_map_bfile:
         f"""{PLINK2_PATH} --vcf {{input.filt_bed}} --export ped  --out {{params.data}}
         {PLINK2_PATH}  --vcf {{input.filt_bed}}  --export hapslegend  --out {{params.data}}
         {PLINK2_PATH}  --vcf {{input.filt_bed}}  --set-all-var-ids @:#:\$r:\$a --new-id-max-allele-len 5000 missing  --make-bed --out {{params.data}}"""
+    message: "Generating haps, legend, map, ped files for hapgen2 & bed, bim, fam for user to check. Input file: {input.filt_bed}, output files start with: {params.data}.*"
+    onsuccess: "Haps, legend, map, ped files for hapgen2 & bed, bim, fam files generated successfully for {wildcards.file}."
+    onerror: "Error generating haps, legend, map, ped files for hapgen2 & bed, bim, fam files. This can be plink2 error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
 
         
         
@@ -280,8 +204,10 @@ rule hapgen2:
         -Ne 11418 \
         -theta 1
         """
+    message: "Executing hapgen2 for {params.data}.* to simulate new dataset."
+    onsuccess: "Hapgen2 completed successfully for {params.data}.*."
+    onerror: "Hapgen2 execution failed for {params.data}.*. This is an inner error of Hapgen2. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
-
 
 rule postprocess_hapgen2:
     input:
@@ -298,7 +224,10 @@ rule postprocess_hapgen2:
         f"""
         rm -f {{params.data}}.cases.*
         rename 's,sim\.controls,sim,' {{params.data}}.controls.*
-        """        
+        """ 
+    message: "Post-processing hapgen2 results for {params.data}."
+    onsuccess: "Post-processing completed for {params.data}."
+    onerror: "Error in post-processing hapgen2 results for {params.data}.  Check logs and in/out files, their formats and try again. Logs are in: {log}."
 
 
 rule change_snp_hapgen:
@@ -315,6 +244,9 @@ rule change_snp_hapgen:
         sed s/"snp_"/"{{params.get_chrom}} snp{{params.get_chrom}}_"/g {{input.filt_sim_gen}} > {{output.filt_sim_gen_}}
         mv {{input.filt_sim_sample}} {{output.filt_sim_sample_}}
         """
+    message: "Changing SNP format of hapgen output for {input.filt_sim_gen}."
+    onsuccess: "Successfully changed SNP format of hapgen output for {input.filt_sim_gen}."
+    onerror: "Failed to change SNP format for {input.filt_sim_gen}. Check logs and in/out files, their formats and try again. Logs are in: {log}."
 
 
 rule make_bed_from_hapgen2:
@@ -335,6 +267,9 @@ rule make_bed_from_hapgen2:
          --make-bed \
          --out {{params.data}}
         """
+    message: "Creating plinks's binary files from hapgen2 simulation of genotypes for {params.data}."
+    onsuccess: "Plinks's binary files created successfully for {params.data}."
+    onerror: "Error during creating plinks's binary files from hapgen2 simulation  for {params.data}. That is probably plink2 error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
 rule merge_chroms:
@@ -357,6 +292,9 @@ rule merge_chroms:
         --make-bed \
         --out {{params.data}}
         """    
+    message: "Merging plinks's binary files by chromosomes to plinks's binary file {params.data}."
+    onsuccess: "Plinks's binary files merged successfully to plinks's binary file {params.data}."
+    onerror: "Error merging plinks's binary files by chromosomes to plinks's binary file {params.data}. That is probably plink2 error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
 rule recode_merged:
@@ -378,6 +316,9 @@ rule recode_merged:
         --max-maf {{params.CAUSAL_MAF_MAX}} \
         --out {{params.data}}
         """
+    message: "Recoding merged plinks's binary into VCF format {params.data}.vcf."
+    onsuccess: "Recoding into VCF format {params.data}.vcf completed."
+    onerror: "Error in recoding into VCF format {params.data}.vcf. That is probably plink2 error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
         
@@ -390,6 +331,9 @@ rule transform_gtf:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/script_make_gtf.sh')} {{input.gtf}} {{output.filt_gtf}}
         """
+    message: "Transforming+filtering {input.gtf} gtf-file."
+    onsuccess: "GTF file {input.gtf} transformed successfully into {output.filt_gtf}."
+    onerror: "Error transforming GTF file {input.gtf} into {output.filt_gtf}. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
         
@@ -402,7 +346,11 @@ rule annotate_vcf:
     shell:
         f"""
         {BEDTOOLS_PATH} closest -a  {{input.vcf}} -b {{input.gtf}} > {{output.vcf}}
-        """       
+        """     
+    message: "Annotating VCF file {input.vcf} using annotations in {input.gtf} and bedtools."
+    onsuccess: "VCF file {input.vcf} annotated successfully. Annotated file is in: {output.vcf}."
+    onerror: "Error annotating VCF file {input.vcf}. That can be problem in bedtools. Check logs and in/out files, their formats and try again. Logs are in: {log}."
+        
         
 rule find_included:
     input:
@@ -412,10 +360,13 @@ rule find_included:
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/find_included.sh')} {{input.vcf}} {{output.included_txt}}
-        """        
+        """      
+    message: "Identifying included genes and SNPs for {input.vcf}."
+    onsuccess: "Successfully identified included genes and SNPs for {input.vcf}."
+    onerror: "Error in identifying included genes and SNPs for {input.vcf}. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
             
-
+# Understand which to execute: select snps per pathway, or use preselected snps
 causal_genes_output = []
 if not SNPS_PROVIDED:
     causal_genes_output = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_causal_geneset_snps.txt')
@@ -472,7 +423,10 @@ rule get_snps_list:
             {{input.path}} \
             {{params.K}} \
             {{params.k}}
-            """)            
+            """)     
+    message: "Generating causal SNPs list."
+    onsuccess: "Causal SNPs list generated successfully in {output.tsv}."
+    onerror: "Error in generating causal SNPs list. Check logs and in/out files, their formats and try again. Logs are in: {log}."
 
 
 
@@ -497,6 +451,9 @@ rule extract_snps:
         --extract range {{input.tsv}} \
         --make-bed --out {{params.out_data}}
         """   
+    message: "Extracting selected causal SNPs from plinks binary {params.filt_sim_data}."
+    onsuccess: "Selected causal SNPs extracted successfully from plinks binary {params.filt_sim_data}. Corresponding plinks binary is: {params.out_data}"
+    onerror: "Error in extracting selected causal SNPs from plinks binary {params.filt_sim_data}. That can be a problem in plink2. Check logs and in/out files, their formats and try again. Logs are in: {log}."
 
 
 rule pheno_sim:
@@ -538,6 +495,9 @@ rule pheno_sim:
         {{ALPHA}} \
         {{SEED}}
         """   
+    message: "Simulating phenotypes from selected causal SNPs ({params.data})."
+    onsuccess: "Phenotype simulation from selected causal SNPs ({params.data}) completed}. Simulated phenotype is in {output.tsv}."
+    onerror: "Error in simulating phenotypes from selected causal SNPs ({params.data}). That can be an R error, or Phenotype simulator inner error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
 # todo make custom gwas        
 rule gwas:
@@ -561,6 +521,9 @@ rule gwas:
         {{params.gwas}} \
         {PLINK_PATH}
         """   
+    message: "Performing GWAS on plink binary {params.data} and {input.pheno}."
+    onsuccess: "GWAS on plink binary {params.data} and {input.pheno} completed successfully. Summary statistics are in {output.gwas}"
+    onerror: "Error performing GWAS on plink binary {params.data} and {input.pheno}}. That can be a plink's gwas error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
              
              
 rule pca:
@@ -580,7 +543,10 @@ rule pca:
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/calc_indep_snps_and_pca.sh')} \
         {{params.bed}} \
         {PLINK2_PATH}
-        """           
+        """         
+    message: "Executing PCA for {params.bed}."
+    onsuccess: "PCA executed successfully for {params.bed}."
+    onerror: "Error in PCA execution for {params.bed}. That can be Python problem. Check logs and in/out files, their formats and try again. Logs are in: {log}."
      
         
              
@@ -606,6 +572,10 @@ rule draw_gwas:
         mv QQplot.pval_{{params.name}}.pdf {{output.qq}}
         mv Rectangular-Manhattan.pval_{{params.name}}.pdf {{output.mh}}
         """       
+    message: "Drawing Manhattan and Q-Q plots for {params.gwas}."
+    onsuccess: "Manhattan and Q-Q plots drawn successfully for {params.gwas}. Files are in: {output.mh} & {output.qq}."
+    onerror: "Error in drawing Manhattan and Q-Q plots. That can be R problem. Check logs and in/out files, their formats and try again. Logs are in: {log}."
+    
              
 rule draw_pca:
     input:
@@ -631,4 +601,7 @@ rule draw_pca:
         {{params.file_indep}} \
         {{params.pdf_indep}}
         """   
+    message: "Creating PCA plots using previously computed PC."
+    onsuccess: "PCA plots created successfully."
+    onerror: "Error in creating PCA plots. That can be Python problem. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
