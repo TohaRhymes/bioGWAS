@@ -79,7 +79,7 @@ Directory: `tests/3_pathways`.
 * Launch Pascal (Pathway scoring algorithm):
     * `3.0_mapping_rsid.py` - map simulated GWAS datasets' positions to rsids.
     * `3.1_batch_pascal.sh` - launch Pascal.
-* Aggregation of all enrichment data: `4.0_pascal_process.ipynb` and `4.1_path_results.ipynb`
+* Aggregation of all enrichment data: `4.0_path_results.ipynb` + drawing `4.1_draw.R`
     
 
 
@@ -87,12 +87,14 @@ Directory: `tests/3_pathways`.
 
 All images are located in `tests/3_pathways/images`:
 
-* `X`
+* `tpr_fpr.pdf` - comparison of TPR for three pathways and FPR of random pathways for MAGMA and Pascal.
 
 #### Data
 
-All datasets are located in `tests/3_pathways/data`:
+All datasets are located in `tests/3_pathways/data_enrich`:
 
-* `X`
+* `*sets.genes.out` - output of MAGMA for enrichment analysis;
+* `*PathwaySet--msigBIOCARTA_KEGG_REACTOME--sum.txt` - output of Pascal for enrichment analysis;
+* `TPR_to_draw.csv` and `FPR_to_draw.csv` - TPR and FPR percentage in all analyses;
 
 
