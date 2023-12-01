@@ -5,7 +5,10 @@ import os
 import subprocess
 import sys
 
-
+RANDOM_SEED_DEFAULT = 566
+PATTERN_DEFAULT="pat"
+CAUSAL_ID_DEFAULT="snps"
+SIM_ID_DEFAULT="sim"
 SNAKE_YAML_TEMPLATE = """
 biogwas_path: {biogwas_path}
 vcf_in_dir: {vcf_in_dir}
@@ -115,7 +118,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     # SCRIPT SETTINGS
-    script_settings = parser.add_argument_group("script settings")
+    script_settings = parser.add_argument_group("Script settings")
     script_settings.add_argument(
         "-d",
         "--dependencies",
@@ -136,7 +139,7 @@ if __name__ == "__main__":
         "-T", "--threads", type=int, default=1, required=False, help="N cores."
     )
     # DIRS
-    dir_settings = parser.add_argument_group("directories settings")
+    dir_settings = parser.add_argument_group("Directories settings")
     dir_settings.add_argument(
         "-id",
         "--input_dir",
@@ -147,23 +150,26 @@ if __name__ == "__main__":
     dir_settings.add_argument(
         "-dd",
         "--data_dir",
-        required=True,
+        required=False,
+        default="./data",
         type=str,
         help="Path to the directory which will be used as a storage for output data.",
     )
     dir_settings.add_argument(
         "-imd",
         "--img_dir",
-        required=True,
+        required=False,
+        default="./images",
         type=str,
         help="Path to the directory which will be used as a storage for the images.",
     )
     # INPUT FILES
-    input_settings = parser.add_argument_group("input settings")
+    input_settings = parser.add_argument_group("Input settings")
     input_settings.add_argument(
         "-vcf",
         "--vcf_in_flag",
         action=argparse.BooleanOptionalAction,
+        required=False,
         default=False,
         type=bool,
         help="If flag is set, algorithm expect input files be in `vcf` format; othervise - in `plink binary` format (requires `bed`+`bim`+`fam` files).",
@@ -197,11 +203,12 @@ if __name__ == "__main__":
         help="File with gene sets (pathways) in gmt-format. Parameter should be used only if use_causal_snps is set to False.",
     )
     # CAUSAL SNPS SETTING
-    causal_settings = parser.add_argument_group("causal SNPs settings")
+    causal_settings = parser.add_argument_group("Causal SNPs settings")
     causal_settings.add_argument(
         "-ucs",
         "--use_causal_snps",
         action=argparse.BooleanOptionalAction,
+        required=False,
         default=False,
         type=bool,
         help="Use specific set of SNPs (from the file in `--causal_snps` parameter), or random SNPs from the specific pathways (from the file in `--causal_pathways` parameter and that were annotated using gmt-file from `--gmt_file` parameter).",
@@ -221,35 +228,40 @@ if __name__ == "__main__":
         help="Path to the file with preselected SNPs (one SNP per line). Required when `--use_causal_snps` is set to True. The format is: <chrom>:<serial number of basepair>",
     )
     # MAF FILTERS
-    maf_settings = parser.add_argument_group("maf settings")
+    maf_settings = parser.add_argument_group("MAF settings")
     maf_settings.add_argument(
         "-maf",
         "--maf_filter",
-        default=0.05,
         required=False,
+        default=0.05,
         type=float,
         help="Filters out all SNPs with minor allele frequency below the provided threshold. Only SNPs with MAF greater than or equal to provided are used for the subsequent analysis.",
     )
     maf_settings.add_argument(
         "-maf_min",
         "--causal_maf_min",
-        default=0.05,
         required=False,
+        default=0.05,
         type=float,
-        help="Only SNPs with MAF greater or equal to provided are used as causal SNPs (they influence phenotype). The maximal theshold is set ufing `--causal_maf_max`.",
+        help="Only SNPs with MAF greater or equal to provided are used as causal SNPs (they influence phenotype). Should be __strictly__ more tham 0.0 and  __strictly__ less than 1.0. The maximal theshold is set using `--causal_maf_max`.",
     )
     maf_settings.add_argument(
         "-maf_max",
         "--causal_maf_max",
-        default=0.9999999999,
         required=False,
+        default=0.5,
         type=float,
-        help="Only SNPs with MAF less or equal to provided are used as causal SNPs (they influence phenotype). The minimal theshold is set ufing `--causal_maf_max`.",
+        help="Only SNPs with MAF less or equal to provided are used as causal SNPs (they influence phenotype). Should be __strictly__ more tham 0.0 and  __strictly__ less than 1.0. The minimal theshold is set using `--causal_maf_min`.",
     )
     # SIMULATED SAMPLES
-    samples_settings = parser.add_argument_group("samples settings")
+    samples_settings = parser.add_argument_group("Samples settings")
     samples_settings.add_argument(
-        "-N", "--N", default=100, type=int, help="Amount of samples to simulate."
+        "-N", 
+        "--N", 
+        required=False,
+        default=100, 
+        type=int, 
+        help="Amount of samples to simulate."
     )
     # SIMULATION PHENOTYPES SETTINGS
     sim_pheno_settings = parser.add_argument_group("phenotypes simulation settings")
@@ -259,7 +271,7 @@ if __name__ == "__main__":
         required=False,
         default=10,
         type=int,
-        help="Amount of causal SNPs. In case when SNPs were set (instead of sets), K should be less or equal than amount of given SNPs).",
+        help="Amount of causal SNPs. In case when SNPs were set (instead of sets), K should be __less or equal__ than amount of given SNPs.",
     )
 
     sim_pheno_settings.add_argument(
@@ -277,7 +289,7 @@ if __name__ == "__main__":
         required=False,
         default=0.05,
         type=float,
-        help="Phenotype simulator parameter: SNP's effect size.",
+        help="Phenotype simulator parameter: SNP's effect size (corresponds to the parameter of the same name in PhenotyppeSimulator).",
     )
 
     sim_pheno_settings.add_argument(
@@ -286,64 +298,65 @@ if __name__ == "__main__":
         required=False,
         default=0.001,
         type=float,
-        help="Phenotype simulator parameter: standard deviation of `--m_beta`",
+        help="Phenotype simulator parameter: standard deviation of `--m_beta` (corresponds to the parameter of the same name in PhenotyppeSimulator).",
     )
 
     sim_pheno_settings.add_argument(
         "-gv",
         "--gen_var",
         required=False,
-        default=0.5,
+        default=0.1,
         type=float,
-        help="Phenotype simulator parameter: the proportion of variation explained by genetics (the rest is noise).",
+        help="Phenotype simulator parameter: the proportion of variation explained by genetics (the rest is noise) (corresponds to the parameter of the same name in PhenotyppeSimulator).",
     )
-
-    sim_pheno_settings.add_argument(
-        "-pig",
-        "--p_independent_genetic",
-        required=False,
-        default=1.0,
-        type=float,
-        help="Phenotype simulator parameter: proportion of genetic variant effects to have a trait-independent fixed effect",
-    )
-
-    sim_pheno_settings.add_argument(
-        "-t",
-        "--theta",
-        required=False,
-        default=0.0,
-        type=float,
-        help="Phenotype simulator parameter: proportion of variance of shared genetic variant effects",
-    )
-
     sim_pheno_settings.add_argument(
         "-a",
         "--alpha",
         required=False,
         default=0.5,
         type=float,
-        help="Phenotype simulator parameter: variance of shared observational noise effect.",
+        help="Phenotype simulator parameter: variance of shared observational noise effect (corresponds to the parameter of the same name in PhenotyppeSimulator).",
     )
+    sim_pheno_settings.add_argument(
+        "-t",
+        "--theta",
+        required=False,
+        default=0.0,
+        type=float,
+        help="Phenotype simulator parameter: proportion of variance of shared genetic variant effects (corresponds to the parameter of the same name in PhenotyppeSimulator).",
+    )
+    sim_pheno_settings.add_argument(
+        "-pig",
+        "--p_independent_genetic",
+        required=False,
+        default=1.0,
+        type=float,
+        help="Phenotype simulator parameter: proportion of genetic variant effects to have a trait-independent fixed effect (corresponds to the parameter of the same name in PhenotyppeSimulator).",
+    )
+
     # Filenames patterns
-    pattern_settings = parser.add_argument_group("filename patterns settings")
+    pattern_settings = parser.add_argument_group("Filenames' patterns settings")
     pattern_settings.add_argument(
         "-p",
         "--pattern",
-        required=True,
+        required=False,
+        default=PATTERN_DEFAULT,
         type=str,
         help="String, that will be use as a prefix for every output file of this simulation.",
     )
     pattern_settings.add_argument(
         "-cid",
         "--causal_id",
-        required=True,
+        required=False,
+        default=CAUSAL_ID_DEFAULT,
         type=str,
         help="ID which represents each file of this specific SNPs' set (foes after `pattern`).",
     )
     pattern_settings.add_argument(
         "-sid",
         "--sim_id",
-        required=True,
+        required=False,
+        default=SIM_ID_DEFAULT,
         type=str,
         help="ID which represents each output file of this specific phenotype and its association with SNPs (goes after `pattern` and `causal_id`).",
     )
@@ -353,6 +366,7 @@ if __name__ == "__main__":
         "-df",
         "--draw_flag",
         action=argparse.BooleanOptionalAction,
+        required=False,
         default=False,
         type=bool,
         help="If flag is set, make graphical representation of simulated genotypes and associations (PCA, MH and QQ).",
@@ -363,7 +377,7 @@ if __name__ == "__main__":
         "-S",
         "--seed",
         required=False,
-        default=566,
+        default=RANDOM_SEED_DEFAULT,
         type=int,
         help="Random seed of this phenotype (!!!) simulation.",
     )
