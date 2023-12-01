@@ -1,6 +1,8 @@
 # GWAS data simulation
 
-Human GWAS data simulator.
+Human GWAS data simulator from Changalidis et al., 2023.
+
+Examples of usage as well as experiments described in the article are presented in the `tests/` directory (with descriptions in [tests/readme.md](tests/readme.md)).
 
 
 # Installation
@@ -164,7 +166,7 @@ docker run --rm -it --entrypoint /bin/bash biogwas
 
 # Examples
 
-Examples of usage as well as validation, ment in the paper is located in `tests` directory.
+Examples of usage as well as validation steps, described in the paper is located in `tests` directory.
 
 
 
