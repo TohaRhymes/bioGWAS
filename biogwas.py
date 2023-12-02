@@ -79,7 +79,8 @@ def check_and_make_dir(dir_path):
         
 def launch_command(command):
     """
-    Launch `command` in bash environment 
+    Launches `command` in bash environment.
+    Prints errors and output, if exists.
     """
     print(command)
     process = subprocess.Popen(

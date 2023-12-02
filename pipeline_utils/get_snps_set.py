@@ -28,7 +28,11 @@ def choose_random_row(group_df):
 def flatten(l):
     return [item for sublist in l for item in sublist]
 
-# 
+
+# ============================================================================
+# file return causal snps using provided pathways
+# (it basically just select K)
+# ============================================================================
 
 # params
 ## todo possibility to chose snps, not genes

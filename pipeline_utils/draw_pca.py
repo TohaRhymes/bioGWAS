@@ -11,6 +11,9 @@ warnings.filterwarnings('ignore')
 
 
 def draw_PCA(FILE_PREFIX, IMAGES_PREFIX, width=18, height=5, dpi=200):
+    """
+    Draw PCA png from eigenvev and eigenval (precomputed by some other tool)    
+    """
     VEC = f"{FILE_PREFIX}.eigenvec"
     VAL = f"{FILE_PREFIX}.eigenval"
     TO = f"{IMAGES_PREFIX}_pca.pdf"

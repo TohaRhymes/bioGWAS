@@ -6,6 +6,10 @@ import sys
 import os
 
 def run(command):
+    """
+    Launches `command` in bash environment.
+    Prints errors and output, if exists.
+    """
     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True, executable='/bin/bash')
     output, error = process.communicate()
     return output, error
@@ -19,7 +23,7 @@ KB=int(sys.argv[5])
 OFILE=os.path.splitext(PFILE)[0]+'_clumps'
 PLINK_PATH=sys.argv[6]
 
-
+# launch plink clump
 command_clump = f"""{PLINK_PATH} \
 --bfile {BFILE} \
 --allow-no-sex \

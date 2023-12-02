@@ -3,6 +3,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 library(PhenotypeSimulator)
 
+# parse args (more info -- in PhenotypeSimulator documentation)
 WD <- args[1]
 geno_file <- args[2]
 pheno_file <- args[3]
@@ -46,6 +47,7 @@ if(genVar==1){
 
 setwd(WD)
 
+# Use Phenotype Simulator functions to simulate phenotypes
 genotypes <- readStandardGenotypes(N=N_samples, 
 					filename=geno_file,
 					format="plink")
@@ -65,7 +67,7 @@ phenotype <- runSimulation(N = N_samples,
                            verbose = TRUE,
                           seed=seed)
 
-
+# Save to file
 print("Saving...")
 Y <- phenotype$phenoComponentsFinal$Y
 

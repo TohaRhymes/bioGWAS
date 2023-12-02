@@ -14,7 +14,10 @@ def extract_substrings(input_string):
 def flatten(l):
     return [item for sublist in l for item in sublist]
 
-# 
+# ============================================================================
+# file return causal snps using provided list of snps 
+# (it basically just select K)
+# ============================================================================
 
 # params
 ## todo possibility to chose snps, not genes

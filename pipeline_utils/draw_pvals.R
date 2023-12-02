@@ -7,7 +7,13 @@ library("CMplot")
 
 # points settings
 CEX=0.7
+# colors for q-q
+colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
 
+
+
+# todo: merge these f's:
+# function checks check_var for true/false value
 is_true_or_false <- function(check_var) {
   check_var_ <- as.character(check_var)
   
@@ -19,7 +25,19 @@ is_true_or_false <- function(check_var) {
     return(FALSE)
   }
 }
+# string to boolean
+str2bool <- function(input_str)
+{
+  if(input_str == "0" || input_str == "FALSE" || input_str == "False" || input_str == "false" || input_str == "F"  || input_str == "f"){
+    input_str = FALSE
+  }else{
+    input_str = TRUE
+  }
+  return(input_str)
+}
 
+
+# open summstats file and prepare for CMplot
 prepare_snp <- function(FILE, delete_sex) {
   print('Reading table...')
   table <- read.table(FILE, header = T, sep = "\t")
@@ -43,6 +61,7 @@ prepare_snp <- function(FILE, delete_sex) {
   
 }
 
+# try read clumps file, if there is no - return NA
 try_read_file <- function(file_pval, CLUMP_FILE){
     SNPs <- tryCatch({
             print('tryin to clump')
@@ -59,17 +78,7 @@ try_read_file <- function(file_pval, CLUMP_FILE){
     return(SNPs)
 }
 
-
-str2bool <- function(input_str)
-{
-  if(input_str == "0" || input_str == "FALSE" || input_str == "False" || input_str == "false" || input_str == "F"  || input_str == "f"){
-    input_str = FALSE
-  }else{
-    input_str = TRUE
-  }
-  return(input_str)
-}
-
+# from the table of SNPs get significant ones (one per window)
 get_markers <- function(mutations, CUT_OFF, WINDOW) {
   if (sum(mutations$pval<=CUT_OFF, na.rm=TRUE)==0){
     return(c())
@@ -126,7 +135,7 @@ get_markers <- function(mutations, CUT_OFF, WINDOW) {
   return(mutations[flag,]$snp)
 }
 
-
+# draw Q-Q and Manhattan using CMPlot
 draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8, width=7, height=5, dpi=40) {
   print("Q-Q printing...")
   CMplot(table,
@@ -180,10 +189,13 @@ draw_mh <- function(table, name, format, color, SNPs, genes, max_pval = 8, width
 }
 
 
-colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f")
+# === script started ===
+
+#pick color for mh
 color <- sample(colors, 1)
 
 
+#parse args
 args = commandArgs(trailingOnly=FALSE)
 
 file_path = ""
@@ -193,7 +205,6 @@ for (arg in args){
         break
     }
 }
-
 
 args = commandArgs(trailingOnly=TRUE)
 pheno_name <- args[1]
@@ -210,27 +221,13 @@ mh_width <- args[10]
 mh_height <- args[11]
 mh_dpi <- args[12]
 
-
-# file_path <- "../../1000genomes/pipeline_utils"
-# pheno_name <- "M06"
-# file_pval <- "data/M06.gwas.imputed_v3.both_sexes.qassoc"
-# clump <- TRUE
-# file_binary <- "../1000genomes/data3/PATTERN_filt_sim"
-# PLINK_PATH <- "/home/achangalidi/tools/plink"
-# delete_sex <- TRUE
-
-
 if(is.na(delete_sex)){
   delete_sex <- FALSE
 }else{
   delete_sex <- is_true_or_false(delete_sex)
 }
 
-
-
-        
-print(pheno_name)
-print(file_pval)
+#read and parse table with snps
 
 table <- prepare_snp(file_pval, delete_sex)
 
@@ -251,8 +248,8 @@ cutoff <-  0.05/nrow(table)
 
 
 
-print('getting markers...')
 ##  getting array of boolean: markers to sign: ##
+print('getting markers...')
 if(clump){
     #R2 significance
     R2 <- 0.1
@@ -271,11 +268,9 @@ if(clump){
     system(get_clumped)
     
     SNPs <- try_read_file(file_pval, CLUMP_FILE)
-
     if(is.null(SNPs)){
             clump <- FALSE
     }
-            
 }
 
 if (! clump){
@@ -300,6 +295,8 @@ if (! clump){
     print('Markers got')
     
 }
+
+#now we have significant SNPs, we can draw them
     
                
 draw_qq(table[,c('snp', 'chr', 'pos', 'pval')],
