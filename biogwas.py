@@ -69,12 +69,18 @@ LOGO = """
 
 
 def check_and_make_dir(dir_path):
+    """
+    Function check if there is directory `dir+path`, if there is no - makes it. 
+    """
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
         print(f"Directory {dir_path} created.")
         
         
 def launch_command(command):
+    """
+    Launch `command` in bash environment 
+    """
     print(command)
     process = subprocess.Popen(
          command, stdout=subprocess.PIPE, shell=True, executable="/bin/bash"
@@ -88,7 +94,7 @@ def main(path, args):
     with open(args.dependencies) as f:
         dep_yaml = f.read()
         
-    # make parameters file to launch Snakemake
+    # parameters to launch Snakemake
     snake_args = {
         "biogwas_path": os.path.abspath(path),
         "vcf_in_dir": os.path.abspath(args.input_dir),
@@ -129,6 +135,8 @@ def main(path, args):
         "mh_dpi": args.mh_dpi,
         "seed": args.seed,
     }
+    
+    # write template file with all variables of SnakeMake
     snake_yaml = SNAKE_YAML_TEMPLATE.format(**snake_args)
     config = os.path.abspath(args.config)    
     config_text = dep_yaml + "\n" + snake_yaml
