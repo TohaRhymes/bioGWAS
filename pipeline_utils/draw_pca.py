@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
-def draw_PCA(FILE_PREFIX, IMAGES_PREFIX):
+def draw_PCA(FILE_PREFIX, IMAGES_PREFIX, width=18, height=5, dpi=200):
     VEC = f"{FILE_PREFIX}.eigenvec"
     VAL = f"{FILE_PREFIX}.eigenval"
     TO = f"{IMAGES_PREFIX}_pca.pdf"
@@ -21,7 +21,7 @@ def draw_PCA(FILE_PREFIX, IMAGES_PREFIX):
     ev = ev/ev.sum()*100
     print(f"Dispersion: {ev}")
 
-    sns.set(rc={'figure.figsize':(18,5)})
+    sns.set(rc={'figure.figsize':(width, height)})
     sns.set_theme(style="whitegrid")
     fig, axs = plt.subplots(nrows=1, ncols=3)
     for i in range(1,4,1):
@@ -29,11 +29,15 @@ def draw_PCA(FILE_PREFIX, IMAGES_PREFIX):
         ax.set(xlabel=f'PC{i}, {round(ev[i-1], 2)}%', 
                ylabel=f'PC{i+1}, {round(ev[i], 2)}%')
     plt.tight_layout()
-    plt.savefig(TO)
+    plt.savefig(TO, dpi=dpi)
     print(f"Draw to {TO}.")
     plt.show()
     
 
 FILE_PREFIX = sys.argv[1]
 IMAGES_PREFIX = sys.argv[2]
-draw_PCA(FILE_PREFIX, IMAGES_PREFIX)
+width = sys.argv[3]
+height = sys.argv[4]
+dpi = sys.argv[5]
+draw_PCA(FILE_PREFIX, IMAGES_PREFIX, width=width, height=height, dpi=dpi)
+

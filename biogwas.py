@@ -44,6 +44,15 @@ pattern: {pattern}
 causal_id: {causal_id}
 sim_id: {sim_id}
 draw_flag: {draw_flag}
+pca_width: {pca_width},
+pca_height: {pca_height}, 
+pca_dpi: {pca_dpi},
+qq_width: {qq_width}, 
+qq_height: {qq_height}, 
+qq_dpi: {qq_dpi},
+mh_width: {mh_width}, 
+mh_height: {mh_height}, 
+mh_dpi: {mh_dpi},
 
 seed: {seed}"""
 
@@ -108,7 +117,16 @@ def main(path, args):
         "pattern": args.pattern,
         "causal_id": args.causal_id,
         "sim_id": args.sim_id,
-        "draw_flag": args.draw_flag,
+        "draw_flag": args.draw_flag,    
+        "pca_width": args.pca_width,
+        "pca_height": args.pca_height, 
+        "pca_dpi": args.pca_dpi,
+        "qq_width": args.qq_width, 
+        "qq_height": args.qq_height, 
+        "qq_dpi": args.qq_dpi,
+        "mh_width": args.mh_width, 
+        "mh_height": args.mh_height, 
+        "mh_dpi": args.mh_dpi,
         "seed": args.seed,
     }
     snake_yaml = SNAKE_YAML_TEMPLATE.format(**snake_args)
@@ -394,6 +412,78 @@ if __name__ == "__main__":
         type=bool,
         help="If flag is set, make graphical representation of simulated genotypes and associations (PCA, MH and QQ).",
     )
+    draw_settings.add_argument(
+        "-pw",
+        "--pca_width",
+        required=False,
+        default=18,
+        type=float,
+        help="Width of a produced PCA image.",
+    )
+    draw_settings.add_argument(
+        "-ph",
+        "--pca_height",
+        required=False,
+        default=5,
+        type=float,
+        help="Height of a produced PCA image.",
+    )
+    draw_settings.add_argument(
+        "-pd",
+        "--pca_dpi",
+        required=False,
+        default=200,
+        type=float,
+        help="DPI (quality) of a produced PCA image.",
+    )
+    draw_settings.add_argument(
+        "-qw",
+        "--qq_width",
+        required=False,
+        default=7,
+        type=float,
+        help="Width of a produced Q-Q plot.",
+    )
+    draw_settings.add_argument(
+        "-qh",
+        "--qq_height",
+        required=False,
+        default=5,
+        type=float,
+        help="Height of a produced Q-Q plot.",
+    )
+    draw_settings.add_argument(
+        "-qd",
+        "--qq_dpi",
+        required=False,
+        default=40,
+        type=float,
+        help="DPI (quality) of a produced Q-Q plot.",
+    )
+    draw_settings.add_argument(
+        "-mw",
+        "--mh_width",
+        required=False,
+        default=14,
+        type=float,
+        help="Width of a produced Manhattan plot.",
+    )
+    draw_settings.add_argument(
+        "-mh",
+        "--mh_height",
+        required=False,
+        default=5,
+        type=float,
+        help="Height of a produced Manhattan plot.",
+    )
+    draw_settings.add_argument(
+        "-md",
+        "--mh_dpi",
+        required=False,
+        default=40,
+        type=float,
+        help="DPI (quality) of a produced Manhattan plot.",
+    )
     # Seed
     seed_settings = parser.add_argument_group("seed settings")
     seed_settings.add_argument(
@@ -408,3 +498,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     path = os.path.dirname(sys.argv[0])
     main(path, args)
+    
+    

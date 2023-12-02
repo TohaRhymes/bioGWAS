@@ -77,7 +77,19 @@ PATTERN = config['pattern']
 CAUSAL_ID = config['causal_id']
 # ID of phenotypes simulation for selected causal SNPs
 SIM_ID = config['sim_id']
+
+# draw settings
 DRAW_FLAG = config['draw_flag']
+
+PCA_WIDTH = config['pca_width']
+PCA_HEIGHT = config['pca_height']
+PCA_DPI = config['pca_dpi']
+QQ_WIDTH = config['qq_width']
+QQ_HEIGHT = config['qq_height']
+QQ_DPI = config['qq_dpi']
+MH_WIDTH = config['mh_width']
+MH_HEIGHT = config['mh_height']
+MH_DPI = config['mh_dpi']
 
 
 SEED = config['seed']
@@ -567,7 +579,13 @@ rule draw_gwas:
         {{input.qassoc}} \
         TRUE \
         {{params.bfile}} \
-        {PLINK_PATH}
+        {PLINK_PATH} \
+        {QQ_WIDTH} \
+        {QQ_HEIGHT} \
+        {QQ_DPI} \
+        {MH_WIDTH} \
+        {MH_HEIGHT} \
+        {MH_DPI}
    
         mv QQplot.pval_{{params.name}}.pdf {{output.qq}}
         mv Rectangular-Manhattan.pval_{{params.name}}.pdf {{output.mh}}
@@ -595,11 +613,17 @@ rule draw_pca:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pca.py')} \
         {{params.file}} \
-        {{params.pdf}}
+        {{params.pdf}} \
+        {PCA_WIDTH} \
+        {PCA_HEIGHT} \
+        {PCA_DPI}
         
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pca.py')} \
         {{params.file_indep}} \
-        {{params.pdf_indep}}
+        {{params.pdf_indep}} \
+        {PCA_WIDTH} \
+        {PCA_HEIGHT} \
+        {PCA_DPI}
         """   
     message: "Creating PCA plots using previously computed PC."
     onsuccess: "PCA plots created successfully."

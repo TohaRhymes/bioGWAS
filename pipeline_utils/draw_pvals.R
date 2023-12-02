@@ -127,7 +127,7 @@ get_markers <- function(mutations, CUT_OFF, WINDOW) {
 }
 
 
-draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
+draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8, width=7, height=5, dpi=40) {
   print("Q-Q printing...")
   CMplot(table,
          plot.type = "q", 
@@ -135,7 +135,6 @@ draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
          box = FALSE, 
          file = format, 
          memo = name, 
-         dpi = 40,
          conf.int = TRUE, 
          conf.int.col = NULL, 
          threshold.col = "red", 
@@ -143,13 +142,14 @@ draw_qq <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
          cex=CEX,
          file.output = TRUE, 
          verbose = TRUE,
-         width = 7, 
-         height = 5
+         width = width, 
+         height = height,
+         dpi = dpi
   )
   print("Q-Q printed")
 }
 
-draw_mh <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
+draw_mh <- function(table, name, format, color, SNPs, genes, max_pval = 8, width=14, height=5, dpi=40) {
   print("MH printing...")
   CMplot(table,
          plot.type = "m", col = c("grey40", "grey70"), # chr colors
@@ -170,11 +170,11 @@ draw_mh <- function(table, name, format, color, SNPs, genes, max_pval = 8) {
          signal.pch = c(19, 19),
          file = format, # file format
          memo = name, # file postfix
-         dpi = 40, 
          file.output = TRUE, 
          verbose = TRUE,
-         width = 14, 
-         height = 5
+         width = width, 
+         height = height,
+         dpi = dpi
   )
   print("MH printed")
 }
@@ -202,6 +202,14 @@ clump <- str2bool(args[3])
 file_binary <- args[4]
 PLINK_PATH <- args[5]
 delete_sex <- args[6]
+
+qq_width <- args[7]
+qq_height <- args[8]
+qq_dpi <- args[9]
+mh_width <- args[10]
+mh_height <- args[11]
+mh_dpi <- args[12]
+
 
 # file_path <- "../../1000genomes/pipeline_utils"
 # pheno_name <- "M06"
@@ -300,7 +308,10 @@ draw_qq(table[,c('snp', 'chr', 'pos', 'pval')],
            color,
            NULL,
            NULL,
-           max_pval)       
+           max_pval,
+           qq_width, 
+           qq_height, 
+           qq_dpi)       
 
 draw_mh(table[,c('snp', 'chr', 'pos', 'pval')],
            pheno_name,
@@ -308,6 +319,9 @@ draw_mh(table[,c('snp', 'chr', 'pos', 'pval')],
            color,
            SNPs,
            SNPs,
-           max_pval)
+           max_pval,
+           mh_width, 
+           mh_height, 
+           mh_dpi)
 
 quit(save='no')
