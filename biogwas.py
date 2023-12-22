@@ -173,7 +173,7 @@ if __name__ == "__main__":
         "-d",
         "--dependencies",
         type=str,
-        default="./dependencies.yaml",
+        default="/dependencies.yaml",
         required=False,
         help="Path to the dependencies file with all constant paths for all internal programs.",
     )
