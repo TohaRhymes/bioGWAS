@@ -176,6 +176,153 @@ docker run --rm -it --entrypoint /bin/bash biogwas
 
 Examples of usage as well as validation steps, described in the paper is located in `tests` directory.
 
+## Step-by-step tutorial
+
+
+### 1. Install Docker
+The simple way to launch our tool is using [Docker](https://docs.docker.com/get-docker/).
+If you use docker, there is no need to install all other packages, everything will be installed for you!
+
+
+### 2. Download source code
+Download this repo source code:
+
+```bash
+git clone https://github.com/TohaRhymes/bioGWAS.git
+```
+
+Go to the directory with the source code:
+
+```bash
+cd bioGWAS
+```
+
+Build an image:
+
+```bash
+docker build -t biogwas .
+```
+
+
+### 3. Make working directory
+
+Create a working directory and browse to it, in linux:
+
+```bash
+mkdir biogwas_test
+cd biogwas_test
+```
+
+
+### 4. Prepare essential files
+
+For this example, let all necessary files be in `./data/` directory (otherwise you have to mount all directories with data when launching docker).
+
+Essential files are:
+
+* genotypes file(s) (in `.vcf` format, we will add support of initial `.bed` files in the nearest future).
+	* you need to store them in one directory (let it be `./data/genotypes`)
+	* you need to create a list of all necessary file(s) to be included (it can be just names, or full path), and the chromosome corresponding to this file, e.g.[the example](data/chr.list):
+```txt
+./data/genotypes/file1.vcf,chr1
+./data/genotypes/file2.vcf,chr2
+...
+```
+Let this file be `./data/genotypes.list` in our example. In the nearest future we are planning to add support for direct passing file names to the command line. 
+
+* txt-file with samples ids to be included in the analysis (one per line), [the example](data/EUR_SAMPLES_ID.txt):
+```txt
+HG00096
+HG00097
+HG00099
+HG00100
+...
+```
+Let this file be `./data/samles.txt` in our example.
+
+* Annotation file in gtf format. In our test we used comprehensive gene annotation downloaded from [gencode site](https://www.gencodegenes.org/human/release_37.html). Let this file be `./data/gencodes.gtf` in our example.
+* You also need to provide:
+	* If you want to use specific causal SNPs, a list of these SNPs, one per line, example:
+```txt
+1:172643220
+3:128435895
+4:76045432
+4:87976387
+5:7891402
+```
+Let this file be `./data/snps.txt` in our example.
+	* If you want to use specific pathways, you need to:
+		* use GMT files with your pathways (you can download hallmark, and other gmt files from [gsea-msigdb website](https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp)). Let this file be `./data/pathways.gmt` in our example.
+		* A list of causal pathway(s), e.g.:
+```txt
+KEGG_PPAR_SIGNALING_PATHWAY
+KEGG_LONG_TERM_DEPRESSION
+
+```
+Let this file be `./data/pathways_list.txt` in our example.
+
+
+So, in total the necessary files are:
+* `./data/genotypes/` - directory with genotypes files
+* `./data/genotypes.list` - list with genotypes files
+* `./data/samles.txt` - list with samples
+* `./data/gencodes.gtf` - annotation file
+* One of two:
+	* `./data/snps.txt` - list of causal SNPs
+	* `./data/pathways.gmt` and `./data/pathways_list.txt` - gmt-file with pathways, and your causal pathways. 
+
+
+### 5. Run simulation
+
+(Let working directory inside container be `/wd`, and our data will be in `/wd/data`, however it can be anything.)
+
+
+If you want to run using causal pathways:
+
+```bash
+docker run \
+-v "./:/wd" \
+biogwas \
+/bioGWAS/biogwas.py \
+--input_dir /path/to/genotypes  \
+--data_dir /wd \
+--img_dir /wd  \
+--vcf_in_flag \
+--input_list  /wd/data/genotypes.list \
+--ids_file  /wd/data/samles.txt \
+--anno_file /wd/data/gencodes.gtf \
+--gmt_file /wd/data/pathways.gmt  \
+--causal_pathways /wd/data/pathways_list.txt
+```
+
+
+If you want to run using causal SNPs:
+
+```bash
+docker run \
+-v "./:/wd" \
+biogwas \
+/bioGWAS/biogwas.py \
+--input_dir /path/to/genotypes  \
+--data_dir /wd \
+--img_dir /wd  \
+--vcf_in_flag \
+--input_list  /wd/data/genotypes.list \
+--ids_file  /wd/data/samles.txt \
+--anno_file /wd/data/gencodes.gtf \
+--gmt_file /wd/data/pathways.gmt  \
+--use_causal_snps \
+--causal_snps /wd/data/snps.txt
+```
+
+
+### 6. Wait!
+
+After finishing, all output data will be in `./data` dir.
+
+
+
+
 
 
 
