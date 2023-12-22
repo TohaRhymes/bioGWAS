@@ -223,43 +223,43 @@ Essential files are:
 * genotypes file(s) (in `.vcf` format, we will add support of initial `.bed` files in the nearest future).
 	* you need to store them in one directory (let it be `./data/genotypes`)
 	* you need to create a list of all necessary file(s) to be included (it can be just names, or full path), and the chromosome corresponding to this file, e.g.[the example](data/chr.list):
-```txt
-./data/genotypes/file1.vcf,chr1
-./data/genotypes/file2.vcf,chr2
-...
-```
-Let this file be `./data/genotypes.list` in our example. In the nearest future we are planning to add support for direct passing file names to the command line. 
+        ```txt
+        ./data/genotypes/file1.vcf,chr1
+        ./data/genotypes/file2.vcf,chr2
+        ...
+        ```
+        Let this file be `./data/genotypes.list` in our example. In the nearest future we are planning to add support for direct passing file names to the command line. 
 
 * txt-file with samples ids to be included in the analysis (one per line), [the example](data/EUR_SAMPLES_ID.txt):
-```txt
-HG00096
-HG00097
-HG00099
-HG00100
-...
-```
-Let this file be `./data/samles.txt` in our example.
+    ```txt
+    HG00096
+    HG00097
+    HG00099
+    HG00100
+    ...
+    ```
+    Let this file be `./data/samles.txt` in our example.
 
 * Annotation file in gtf format. In our test we used comprehensive gene annotation downloaded from [gencode site](https://www.gencodegenes.org/human/release_37.html). Let this file be `./data/gencodes.gtf` in our example.
 * You also need to provide:
 	* If you want to use specific causal SNPs, a list of these SNPs, one per line, example:
-```txt
-1:172643220
-3:128435895
-4:76045432
-4:87976387
-5:7891402
-```
-Let this file be `./data/snps.txt` in our example.
+        ```txt
+        1:172643220
+        3:128435895
+        4:76045432
+        4:87976387
+        5:7891402
+        ```
+        Let this file be `./data/snps.txt` in our example.
 	* If you want to use specific pathways, you need to:
 		* use GMT files with your pathways (you can download hallmark, and other gmt files from [gsea-msigdb website](https://www.gsea-msigdb.org/gsea/msigdb/collections.jsp)). Let this file be `./data/pathways.gmt` in our example.
 		* A list of causal pathway(s), e.g.:
-```txt
-KEGG_PPAR_SIGNALING_PATHWAY
-KEGG_LONG_TERM_DEPRESSION
-
-```
-Let this file be `./data/pathways_list.txt` in our example.
+            ```txt
+            KEGG_PPAR_SIGNALING_PATHWAY
+            KEGG_LONG_TERM_DEPRESSION
+            
+            ```
+            Let this file be `./data/pathways_list.txt` in our example.
 
 
 So, in total the necessary files are:
@@ -319,10 +319,3 @@ biogwas \
 ### 6. Wait!
 
 After finishing, all output data will be in `./data` dir.
-
-
-
-
-
-
-
