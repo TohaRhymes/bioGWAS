@@ -240,6 +240,7 @@ Essential files are:
     ```
     Let this file be `./data/samles.txt` in our example.
 
+  In case you don't have this file, you can create it using `bcftools`: ```bcftools query -l your/vcf/file.vcf >  ./data/samles.txt```
 * Annotation file in gtf format. In our test we used comprehensive gene annotation downloaded from [gencode site](https://www.gencodegenes.org/human/release_37.html). Let this file be `./data/gencodes.gtf` in our example.
 * You also need to provide:
 	* If you want to use specific causal SNPs, a list of these SNPs, one per line, example:
