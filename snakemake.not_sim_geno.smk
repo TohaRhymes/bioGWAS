@@ -22,7 +22,7 @@ rule module_not_sim_geno_all:
         
 
 # ===================================
-# RUN SIMULATION 
+# SKIP SIMULATION -- but prepare genos 
 # ===================================
 
 
