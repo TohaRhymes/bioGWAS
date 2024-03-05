@@ -11,13 +11,13 @@ CAUSAL_ID_DEFAULT="snps"
 SIM_ID_DEFAULT="sim"
 SNAKE_YAML_TEMPLATE = """
 biogwas_path: {biogwas_path}
-vcf_in_dir: {vcf_in_dir}
 data_dir: {data_dir}
 images_dir: {images_dir}
 
-vcf_in_flag: {vcf_in_flag}
+bfile_in_flag: {bfile_in_flag}
 vcfs_list: {vcfs_list}
-ids_file: {ids_file}
+geno_list: {geno_list}
+chr_list: {chr_list}
 anno_file: {anno_file}
 gmt_file: {gmt_file}
 
@@ -25,11 +25,16 @@ use_causal_snps: {use_causal_snps}
 causal_pathways: {causal_pathways}
 causal_snps: {causal_snps}
 
+ids_file: {ids_file}
+sample_call_rate: {sample_call_rate}
+variant_call_rate: {variant_call_rate}
+
 maf_filter: {maf_filter}
 causal_maf_min: {causal_maf_min}
 causal_maf_max: {causal_maf_max}
 
 N: {N}
+skip_simulation: {skip_simulation}
 
 K: {K}
 k: {k}
@@ -76,6 +81,19 @@ def check_and_make_dir(dir_path):
         os.makedirs(dir_path)
         print(f"Directory {dir_path} created.")
         
+def abs_path_check_none(path):
+    """
+    Returns absolute path to the file if `path` is not None, otherwise returns empty string.
+    """
+    return os.path.abspath(path) if path is not None else ""
+
+
+def str_check_none(string):
+    """
+    Returns `string` itself if it is not None, otherwise returns empty string.
+    """
+    return string if string is not None else ""
+        
         
 def launch_command(command):
     """
@@ -87,8 +105,10 @@ def launch_command(command):
          command, stdout=subprocess.PIPE, shell=True, executable="/bin/bash"
     )
     output, error = process.communicate()
-    print("\n=============================\nOUTPUT: \n", output)
-    print("\n=============================\nERRORS: \n", error)
+    if output:
+        print("\n=============================\nOUTPUT: \n", output.decode())
+    if error:
+        print("\n=============================\nERRORS: \n", error.decode())
 
 
 def main(path, args):
@@ -98,21 +118,25 @@ def main(path, args):
     # parameters to launch Snakemake
     snake_args = {
         "biogwas_path": os.path.abspath(path),
-        "vcf_in_dir": os.path.abspath(args.input_dir),
-        "data_dir": os.path.abspath(args.data_dir),
-        "images_dir": os.path.abspath(args.img_dir),
-        "vcf_in_flag": args.vcf_in_flag,
-        "vcfs_list": os.path.abspath(args.input_list),
-        "ids_file": os.path.abspath(args.ids_file),
-        "anno_file": os.path.abspath(args.anno_file),
-        "gmt_file": os.path.abspath(args.gmt_file),
+        "data_dir": abs_path_check_none(args.data_dir),
+        "images_dir": abs_path_check_none(args.img_dir),
+        "bfile_in_flag": args.bfile_in_flag,
+        "vcfs_list": abs_path_check_none(args.input_list),
+        "geno_list": str_check_none(args.geno_list),
+        "chr_list": str_check_none(args.chr_list),
+        "ids_file": abs_path_check_none(args.ids_file),
+        "anno_file": abs_path_check_none(args.anno_file),
+        "gmt_file": abs_path_check_none(args.gmt_file),
         "use_causal_snps": args.use_causal_snps,
-        "causal_pathways": os.path.abspath(args.causal_pathways) if args.causal_pathways is not None else "",
-        "causal_snps": os.path.abspath(args.causal_snps) if args.causal_snps is not None else "",
+        "causal_pathways": abs_path_check_none(args.causal_pathways),
+        "causal_snps": abs_path_check_none(args.causal_snps),
+        "sample_call_rate": args.sample_call_rate,
+        "variant_call_rate": args.variant_call_rate,
         "maf_filter": args.maf_filter,
         "causal_maf_min": args.causal_maf_min,
         "causal_maf_max": args.causal_maf_max,
         "N": args.N,
+        "skip_simulation": args.skip_simulation,
         "K": args.K,
         "k": args.k,
         "m_beta": args.m_beta,
@@ -191,13 +215,6 @@ if __name__ == "__main__":
     # DIRS
     dir_settings = parser.add_argument_group("Directories settings")
     dir_settings.add_argument(
-        "-id",
-        "--input_dir",
-        required=True,
-        type=str,
-        help="Path to the directory which contains input genotypes.",
-    )
-    dir_settings.add_argument(
         "-dd",
         "--data_dir",
         required=False,
@@ -216,27 +233,34 @@ if __name__ == "__main__":
     # INPUT FILES
     input_settings = parser.add_argument_group("Input settings")
     input_settings.add_argument(
-        "-vcf",
-        "--vcf_in_flag",
+        "-bfile",
+        "--bfile_in_flag",
         action=argparse.BooleanOptionalAction,
         required=False,
         default=False,
         type=bool,
-        help="If flag is set, algorithm expect input files be in `vcf` format; othervise - in `plink binary` format (requires `bed`+`bim`+`fam` files).",
+        help="If flag is set, algorithm expect input files be in plink's `binary` format (requires `bed`+`bim`+`fam` files); othervise - in `vcf` format. NOTE: binary files can be only used if `--skip_simulation` is used (it is not possible to use bfiles when simulating genotypes).",
     )
     input_settings.add_argument(
         "-il",
         "--input_list",
-        required=True,
+        required=False,
         type=str,
-        help="CSV-file that describes one input file per line with structure: <file>,<chromosome_number>. For plink bfiles, provide __just name__ without extension.",
+        help="Path to csv-file that describes one input file per line with structure: <file>,<chromosome_number>. For plink bfiles, provide __just name__ without extension. The tool requires either this path, or `--geno_list` at least.",
     )
     input_settings.add_argument(
-        "-if",
-        "--ids_file",
-        required=True,
+        "-gel",
+        "--geno_list",
+        required=False,
         type=str,
-        help="File with samples ids (from input files) to use for sampling (one id per line).",
+        help="All input file(s): <absolute_path1>,<absolute_path2>. For plink bfiles, provide __just name__ without extension. The tool requires either this list, or `--input_list`.",
+    )
+    input_settings.add_argument(
+        "-chl",
+        "--chr_list",
+        required=False,
+        type=str,
+        help="All chromosome numbers for the corresponding files from `--geno_list`, by default 1,2,3,4,5... will be used. The format: <chromosome_number1>,<chromosome_number2>",
     )
     input_settings.add_argument(
         "-af",
@@ -277,6 +301,31 @@ if __name__ == "__main__":
         type=str,
         help="Path to the file with preselected SNPs (one SNP per line). Required when `--use_causal_snps` is set to True. The format is: <chrom>:<serial number of basepair>",
     )
+    # Filter settings
+    filt_settings = parser.add_argument_group("Filtering settings")
+    filt_settings.add_argument(
+        "-if",
+        "--ids_file",
+        required=False,
+        type=str,
+        help="File with samples ids (from input files) to use for sampling (one id per line), all other will be filtered. If not set, all samples are used by default.",
+    )
+    filt_settings.add_argument(
+        "-vcr",
+        "--variant_call_rate",
+        required=False,
+        default=0.95,
+        type=float,
+        help="Filters out all SNPs with call rate below the provided threshold.",
+    )
+    filt_settings.add_argument(
+        "-scr",
+        "--sample_call_rate",
+        required=False,
+        default=0.95,
+        type=float,
+        help="Filters out all samples with call rate below the provided threshold.",
+    )
     # MAF FILTERS
     maf_settings = parser.add_argument_group("MAF settings")
     maf_settings.add_argument(
@@ -304,17 +353,26 @@ if __name__ == "__main__":
         help="Only SNPs with MAF less or equal to provided are used as causal SNPs (they influence phenotype). Should be __strictly__ more tham 0.0 and  __strictly__ less than 1.0. The minimal theshold is set using `--causal_maf_min`.",
     )
     # SIMULATED SAMPLES
-    samples_settings = parser.add_argument_group("Samples settings")
+    samples_settings = parser.add_argument_group("Genotype simulation settings")
     samples_settings.add_argument(
         "-N", 
         "--N", 
         required=False,
         default=100, 
         type=int, 
-        help="Amount of samples to simulate."
+        help="Amount of samples to simulate (used if `--skip_simulation` is not set)."
+    )
+    samples_settings.add_argument(
+        "-ss",
+        "--skip_simulation",
+        action=argparse.BooleanOptionalAction,
+        required=False,
+        default=False,
+        type=bool,
+        help="If flag is set, simulation genotypes step will be skipped: input genotypes will be used to generate phenotypes and association analysis.",
     )
     # SIMULATION PHENOTYPES SETTINGS
-    sim_pheno_settings = parser.add_argument_group("phenotypes simulation settings")
+    sim_pheno_settings = parser.add_argument_group("Phenotypes simulation settings")
     sim_pheno_settings.add_argument(
         "-K",
         "--K",
