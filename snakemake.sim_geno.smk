@@ -10,20 +10,16 @@ import pandas as pd
 # ===================================
 
 files_basenames = [get_basename(f) for f in files]
-module_a_final_outputs = [
+module_sim_geno_final_outputs = [
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam")
 ]
 
-rule moduleA_all:
+rule module_sim_geno_all:
     input:
-        inputa = module_a_final_outputs
+        inputa = module_sim_geno_final_outputs
         
-        
-def kek(f, file):
-    print(file, f, get_basename(f) == file)
-    return get_basename(f) == file
         
 
 # ===================================
@@ -32,7 +28,7 @@ def kek(f, file):
 
 rule prefilter:
     input:
-        vcf=lambda wildcards: next(f"{f}.vcf" for f in files if kek(f, wildcards.file))
+        vcf=lambda wildcards: next(f"{f}.vcf" for f in files if get_basename(f) == wildcards.file)
     output:
         vcf=temp("{file}_prefilt.vcf"),    
         vmiss=temp("{file}_prefilt.vmiss"),    

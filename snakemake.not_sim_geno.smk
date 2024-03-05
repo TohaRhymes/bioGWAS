@@ -10,27 +10,20 @@ import pandas as pd
 # ===================================
 
 files_basenames = [get_basename(f) for f in files]
-module_b_final_outputs = [
+module_not_sim_geno_final_outputs = [
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.fam")
 ]
 
-rule moduleA_all:
+rule module_not_sim_geno_all:
     input:
-        inputb = module_b_final_outputs
+        inputb = module_not_sim_geno_final_outputs
         
 
 # ===================================
 # RUN SIMULATION 
 # ===================================
-
-
-def kek(f, wildcards):
-    print(f, wildcards, get_basename(f) == wildcards.file, sep='\n - ')
-    return get_basename(f) == wildcards.file
-
-
 
 
 rule prefilter:
