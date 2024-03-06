@@ -46,10 +46,8 @@ for file, gmt, k in zip(files, gmts, ks):
         /bioGWAS/biogwas.py \
         --dependencies /dependencies.yaml \
         --threads 8 \
-        --input_dir /wd/data \
         --data_dir /wd/3_pathways/in_data \
         --img_dir /wd/3_pathways/images \
-        --vcf_in_flag \
         --input_list  /wd/data/chr.list \
         --ids_file  /wd/data/EUR_SAMPLES_ID.txt \
         --anno_file /wd/data/gencode.v37.annotation.gtf \

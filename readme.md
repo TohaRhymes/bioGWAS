@@ -15,8 +15,7 @@ To make this tool working, you need:
 # Launch
 
 The only __required__ parameters are:
-* `-id/--input_dir` - path to the directory which contains input genotypes.
-* `-il/--input_list` - csv-file that describes one input file per line with structure: `<file>,<chromosome_number>`.
+* `-il/--input_list` - csv-file that describes one input file per line with structure: `<abs_path_to_file>,<chromosome_number>`.
 * `-if/--ids_file` - file with samples ids (from input files) to use for sampling (one id per line).
 * `-af/--anno_file` -- file with chromosome annotations in gtf-format.
 
@@ -32,10 +31,8 @@ Example of launching simulation:
 
 ```bash
 ./biogwas.py \
---input_dir <input_data_dir>  \
 --data_dir <output_data_dir>  \
 --img_dir <output_images_dir>  \
---vcf_in_flag \
 --input_list  <path_to_genofile_list>.list \
 --ids_file  <path_to_samples_list>.txt \
 --anno_file <path_to_gtf>.gtf \
@@ -50,10 +47,8 @@ Or shortly:
 
 ```bash
 ./biogwas.py \
--id <input_data_dir>  \
 -dd <output_data_dir>  \
 -imd <output_images_dir>  \
--vcf \
 -il  <path_to_genofile_list>.list \
 -if  <path_to_samples_list>.txt \
 -af <path_to_gtf>.gtf \
@@ -81,10 +76,8 @@ docker run \
 biogwas \
 /bioGWAS/biogwas.py \
 -d /dependencies.yaml \
--id <input_data_dir_inside_container>  \
 -dd <output_data_dir_inside_container>  \
 -imd <output_images_dir_inside_container>  \
--vcf \
 -il  <path_to_genofile_list_inside_container>.list \
 -if  <path_to_samples_list_inside_container>.txt \
 -af <path_to_gtf_inside_container>.gtf \
@@ -131,15 +124,13 @@ You have to work with the command part:
 command: >
 /bioGWAS/biogwas.py
 -d /dependencies.yaml
--id <input_data_dir_inside_container>  \
--dd <output_data_dir_inside_container>  \
--imd <output_images_dir_inside_container>  \
--vcf \
--il  <path_to_genofile_list_inside_container>.list \
--if  <path_to_samples_list_inside_container>.txt \
--af <path_to_gtf_inside_container>.gtf \
--gf <path_to_gmt_inside_container>.gmt  \
--cp <path_to_pathways_inside_container>.csv \
+-dd "/data/gwassim_check/attempt_docker/data"
+-imd "/data/gwassim_check/attempt_docker/images"
+-il "/data/1000genomes/data2/chr.list"
+-if "/data/1000genomes/data2/EUR_SAMPLES_ID.txt"
+-af "/data/1000genomes/data2/gencode.v37.annotation.gtf"
+--gmt_file "/data/1000genomes/data2/h.all.v2023.1.Hs.symbols.gmt"
+--causal_pathways "/data/1000genomes/data2/pathways.csv"
 -p "dpat"
 -cid "dcid"
 -sid "dsid"
@@ -238,7 +229,7 @@ Essential files are:
     HG00100
     ...
     ```
-    Let this file be `./data/samles.txt` in our example.
+    Let this file be `./data/samples.txt` in our example.
 
   In case you don't have this file, you can create it using `bcftools`: ```bcftools query -l your/vcf/file.vcf >  ./data/samles.txt```
 * Annotation file in gtf format. In our test we used comprehensive gene annotation downloaded from [gencode site](https://www.gencodegenes.org/human/release_37.html). Let this file be `./data/gencodes.gtf` in our example.
@@ -266,7 +257,7 @@ Essential files are:
 So, in total the necessary files are:
 * `./data/genotypes/` - directory with genotypes files
 * `./data/genotypes.list` - list with genotypes files
-* `./data/samles.txt` - list with samples
+* `./data/samples.txt` - list with samples
 * `./data/gencodes.gtf` - annotation file
 * One of two:
 	* `./data/snps.txt` - list of causal SNPs
@@ -285,12 +276,10 @@ docker run \
 -v "./:/wd" \
 biogwas \
 /bioGWAS/biogwas.py \
---input_dir /path/to/genotypes  \
 --data_dir /wd \
 --img_dir /wd  \
---vcf_in_flag \
 --input_list  /wd/data/genotypes.list \
---ids_file  /wd/data/samles.txt \
+--ids_file  /wd/data/samples.txt \
 --anno_file /wd/data/gencodes.gtf \
 --gmt_file /wd/data/pathways.gmt  \
 --causal_pathways /wd/data/pathways_list.txt
@@ -304,10 +293,8 @@ docker run \
 -v "./:/wd" \
 biogwas \
 /bioGWAS/biogwas.py \
---input_dir /path/to/genotypes  \
 --data_dir /wd \
 --img_dir /wd  \
---vcf_in_flag \
 --input_list  /wd/data/genotypes.list \
 --ids_file  /wd/data/samles.txt \
 --anno_file /wd/data/gencodes.gtf \

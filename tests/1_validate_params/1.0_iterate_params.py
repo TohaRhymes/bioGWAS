@@ -35,10 +35,8 @@ for K in Ks:
         /bioGWAS/biogwas.py \
         --dependencies /dependencies.yaml \
         --threads 8 \
-        --input_dir /wd/data \
         --data_dir /wd/1_validate_params/data \
         --img_dir /wd/1_validate_params/images \
-        --vcf_in_flag \
         --input_list  /wd/data/chr.list \
         --ids_file  /wd/data/EUR_SAMPLES_ID.txt \
         --anno_file /wd/data/gencode.v37.annotation.gtf \
