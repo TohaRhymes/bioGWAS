@@ -15,9 +15,20 @@ To make this tool working, you need:
 # Launch
 
 The only __required__ parameters are:
-* `-il/--input_list` - csv-file that describes one input file per line with structure: `<abs_path_to_file>,<chromosome_number>`.
-* `-if/--ids_file` - file with samples ids (from input files) to use for sampling (one id per line).
+* Genotypes, one of these:
+    * `-il/--input_list` - csv-file that describes one input file per line with structure: `<abs_path_to_file>,<chromosome_number>`.
+    * `-gel/--geno_list` and  `-chl/--chr_list` and specify genotype file(s) and chromosome(s) respectively:
+```text
+    --geno_list /wd/data/genotypes/file1.vcf,/wd/data/genotypes/file2.vcf
+    --chr_list chr1,chr2
+```
 * `-af/--anno_file` -- file with chromosome annotations in gtf-format.
+* Dependencies file with tools pathes (set by `-d/--dependencies`).
+* Output directories for data and images (default: `./data` and `./images`) -- they should be created.
+* For choosing causal SNPs/pathways:
+    * `-ucs/--use_causal_snps` - has to be set or not set.
+    * then `-cp/--causal_pathways` OR `-cs/--causal_snps` for specifying causal pathways/SNPs respectively.
+    * if we use causal pathways (i.e. `use_causal_snps` is not set), we also have to specify `--gmt_file`.
 
 
 Full list of parameters with its description and default values can be found here:
@@ -34,7 +45,6 @@ Example of launching simulation:
 --data_dir <output_data_dir>  \
 --img_dir <output_images_dir>  \
 --input_list  <path_to_genofile_list>.list \
---ids_file  <path_to_samples_list>.txt \
 --anno_file <path_to_gtf>.gtf \
 --gmt_file <path_to_gmt>.gmt  \
 --causal_pathways <path_to_pathways>.csv \
@@ -50,7 +60,6 @@ Or shortly:
 -dd <output_data_dir>  \
 -imd <output_images_dir>  \
 -il  <path_to_genofile_list>.list \
--if  <path_to_samples_list>.txt \
 -af <path_to_gtf>.gtf \
 -gf <path_to_gmt>.gmt  \
 -cp <path_to_pathways>.csv \
@@ -69,7 +78,7 @@ docker build -t biogwas .
 
 ### Launch from CLI
 
-After that you can easily run docker by:
+After that you can easily run docker by something like:
 ```bash
 docker run \
 -v "<work_dir>:<work_dir_inside_container>" \
@@ -79,7 +88,6 @@ biogwas \
 -dd <output_data_dir_inside_container>  \
 -imd <output_images_dir_inside_container>  \
 -il  <path_to_genofile_list_inside_container>.list \
--if  <path_to_samples_list_inside_container>.txt \
 -af <path_to_gtf_inside_container>.gtf \
 -gf <path_to_gmt_inside_container>.gmt  \
 -cp <path_to_pathways_inside_container>.csv \
@@ -88,14 +96,8 @@ biogwas \
 -sid "dsid"
 ```
 
-Your parameters goes after 5th string, i.e. you have to leave first 5 strings as they are:
-```bash
-docker run \
--v "<work_dir>:<work_dir_inside_container>" \
-biogwas \
-/bioGWAS/biogwas.py \
--d /dependencies.yaml
-```
+Your parameters for biogwas goes after 5th string, i.e. you have to leave first 5 strings as they are (except `-v` flag which shows how to mount directories inside container, you **have** to specify all directories you're using: the easiest way  is to make just one directory with subdirectories for I/O, and specify this one directory):
+
 
 All other flags can be changed. To read manual, simply run with flag `--help`:
 
@@ -110,7 +112,7 @@ biogwas \
 
 ### Launch with docker-compose.yaml
 
-Alternatively you can launch bioGWAS using `docker-compose`. Example of configuration is in `docker-compose.yaml` file. You have to change:
+Alternatively you can launch bioGWAS using `docker-compose`. Example of configuration is in `docker-compose.yaml` file. You have to change (again, it shows how to mount directories inside container, you **have** to specify all directories you're using: the easiest way  is to make just one directory with subdirectories for I/O, and specify this one directory):
 
 ```
 volumes:
@@ -209,19 +211,37 @@ cd biogwas_test
 
 For this example, let all necessary files be in `./data/` directory (otherwise you have to mount all directories with data when launching docker).
 
-Essential files are:
 
-* genotypes file(s) (in `.vcf` format, we will add support of initial `.bed` files in the nearest future).
-	* you need to store them in one directory (let it be `./data/genotypes`)
-	* you need to create a list of all necessary file(s) to be included (it can be just names, or full path), and the chromosome corresponding to this file, e.g.[the example](data/chr.list):
+#### Genotypes files
+
+There are 2 ways to set genotypes files:
+
+__Method 1: using file__
+
+* genotypes file(s) (in `.vcf` or PLINK's bfile format (the former is available only with skipping genotypes simulation)).
+	* you need to create a list of all necessary file(s) to be included, and the chromosome corresponding to this file, e.g.[the example](data/chr.list):
         ```txt
-        ./data/genotypes/file1.vcf,chr1
-        ./data/genotypes/file2.vcf,chr2
+        /wd/data/genotypes/file1.vcf,chr1
+        /wd/data/genotypes/file2.vcf,chr2
         ...
         ```
-        Let this file be `./data/genotypes.list` in our example. In the nearest future we are planning to add support for direct passing file names to the command line. 
+        __Note__: path should be written as files will appear in docker container. All other files path will be specified later, when we launch docker.  
+        Let this file be `./data/genotypes.list` in our example.
 
-* txt-file with samples ids to be included in the analysis (one per line), [the example](data/EUR_SAMPLES_ID.txt):
+__Method 2: using flags__        
+
+Instead of creating a file with genotypes and specifying it using `--input_list`,
+we can run bioGWAS using `--geno_list` and  `--chr_list` and specify genotype file(s) and chromosome(s) respectively:
+```bash
+    ...
+    --geno_list /wd/data/genotypes/file1.vcf,/wd/data/genotypes/file2.vcf
+    --chr_list chr1,chr2
+    ...
+```
+
+#### Samples to be included (optionally)
+
+It should be txt-file with samples ids to be included in the analysis (one per line), [the example](data/EUR_SAMPLES_ID.txt):
     ```txt
     HG00096
     HG00097
@@ -232,8 +252,14 @@ Essential files are:
     Let this file be `./data/samples.txt` in our example.
 
   In case you don't have this file, you can create it using `bcftools`: ```bcftools query -l your/vcf/file.vcf >  ./data/samles.txt```
-* Annotation file in gtf format. In our test we used comprehensive gene annotation downloaded from [gencode site](https://www.gencodegenes.org/human/release_37.html). Let this file be `./data/gencodes.gtf` in our example.
-* You also need to provide:
+  
+#### Annotations
+
+It should be annotation file in gtf format. In our test we used comprehensive gene annotation downloaded from [gencode site](https://www.gencodegenes.org/human/release_37.html). Let this file be `./data/gencodes.gtf` in our example.
+
+
+#### Specifying causal SNPs/pathways
+
 	* If you want to use specific causal SNPs, a list of these SNPs, one per line, example:
         ```txt
         1:172643220
@@ -253,6 +279,7 @@ Essential files are:
             ```
             Let this file be `./data/pathways_list.txt` in our example.
 
+#### Summary
 
 So, in total the necessary files are:
 * `./data/genotypes/` - directory with genotypes files

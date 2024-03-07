@@ -274,7 +274,7 @@ if __name__ == "__main__":
         "--gmt_file",
         required=False,
         type=str,
-        help="File with gene sets (pathways) in gmt-format. Parameter should be used only if use_causal_snps is set to False.",
+        help="File with gene sets (pathways) in gmt-format. Parameter should be used only if use_causal_snps is not set (i.e. equal to False).",
     )
     # CAUSAL SNPS SETTING
     causal_settings = parser.add_argument_group("Causal SNPs settings")
