@@ -34,8 +34,8 @@ RUN wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20231018.zip 
     && mv plink /usr/local/bin/
 
 # Download and install PLINK 2.00a4.9LM
-RUN wget https://s3.amazonaws.com/plink2-assets/alpha5/plink2_linux_x86_64_20231030.zip \
-    && unzip plink2_linux_x86_64_20231030.zip \
+RUN wget https://s3.amazonaws.com/plink2-assets/alpha5/plink2_linux_x86_64_20240105.zip \
+    && unzip plink2_linux_x86_64_20240105.zip \
     && mv plink2 /usr/local/bin/
 
 # Write paths to dependencies.yaml
@@ -60,4 +60,5 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Define the data directory as a volume
 VOLUME /data
+
 
