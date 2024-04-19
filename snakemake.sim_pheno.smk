@@ -57,7 +57,7 @@ rule transform_gtf:
     input:
         gtf=GTF_IN
     output:
-        filt_gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
+        filt_gtf=os.path.join(DATA_DIR,f"{get_basename(GTF_IN)}_filt_sort.gtf")
     message: 
         """
         Description: Transforming+filtering {input.gtf} gtf-file.
@@ -74,7 +74,7 @@ rule transform_gtf:
 rule annotate_vcf:
     input:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.vcf"),
-        gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
+        gtf=os.path.join(DATA_DIR,f"{get_basename(GTF_IN)}_filt_sort.gtf")
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
     message: 
