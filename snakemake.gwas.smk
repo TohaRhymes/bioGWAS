@@ -13,7 +13,7 @@ module_gwas_final_outputs = [
     os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas.tsv"),
 ]
 
-rule module_sim_geno_all:
+rule module_sim_gwas_all:
     input:
         inputd = module_gwas_final_outputs
         

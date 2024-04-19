@@ -25,18 +25,32 @@ rule module_not_sim_geno_all:
 # SKIP SIMULATION -- but prepare genos 
 # ===================================
 
+ruleorder: prefilter > get_filtered_variants_samples > postfilter > merge_chroms > module_not_sim_geno_all
 
 rule prefilter:
     input:
-        vcf=lambda wildcards: next(f"{f+'.vcf' if not BFILE_IN_FLAG else f+'.bed'}" for f in files if get_basename(f) == wildcards.file)
+        vcf=lambda wildcards: next(
+        f+'.vcf' if not BFILE_IN_FLAG else f+'.bed' 
+        for f in files if (
+        (get_basename(f) == wildcards.file and not BFILE_IN_FLAG) 
+        or 
+        (remove_ext(get_basename(f)) == wildcards.file and BFILE_IN_FLAG)
+        ))
     output:
-        bed=temp("{file}.bed"),
-        bim=temp("{file}.bim"),
-        fam=temp("{file}.fam"),
-        vmiss=temp("{file}.vmiss"),    
-        smiss=temp("{file}.smiss")   
+        bed=temp("{file}_prefilt.bed"),
+        bim=temp("{file}_prefilt.bim"),
+        fam=temp("{file}_prefilt.fam"),
+        vmiss=temp("{file}_prefilt.vmiss"),    
+        smiss=temp("{file}_prefilt.smiss")   
     params:
-        vcf_bfile=lambda wildcards: next(f"{f+'.vcf' if not BFILE_IN_FLAG else f}" for f in files if get_basename(f) == wildcards.file)  # Adjust for plink input
+        vcf_bfile = lambda wildcards: next(
+            f + ".vcf" if not BFILE_IN_FLAG else f
+            for f in files
+            if (
+                (get_basename(f) == wildcards.file and not BFILE_IN_FLAG)
+                or (remove_ext(get_basename(f)) == wildcards.file and BFILE_IN_FLAG)
+            )
+        )  # Adjust for plink input
     message:
         """
         Description: Starting preparation of {input.vcf}: filter alleles. It also calculates variant and sample rate for filtering. 
@@ -52,13 +66,13 @@ rule prefilter:
         {f"--keep {IDS_FILE} " if IDS_FILE is not None else ""}\
         --make-bed  \
         --missing \
-        --out {{wildcards.file}}
+        --out {{wildcards.file}}_prefilt
         """
         
 rule get_filtered_variants_samples:
     input:
-        vmiss="{file}.vmiss",   
-        smiss="{file}.smiss" 
+        vmiss="{file}_prefilt.vmiss",   
+        smiss="{file}_prefilt.smiss" 
     output:  
         vmiss=temp("{file}_filt_sim.vmiss"),    
         smiss=temp("{file}_filt_sim.smiss")      
@@ -85,9 +99,9 @@ rule get_filtered_variants_samples:
 
 rule postfilter:
     input:
-        bed="{file}.bed",
-        bim="{file}.bim",
-        fam="{file}.fam",
+        bed="{file}_prefilt.bed",
+        bim="{file}_prefilt.bim",
+        fam="{file}_prefilt.fam",
         vmiss="{file}_filt_sim.vmiss",    
         smiss="{file}_filt_sim.smiss"    
     output:
