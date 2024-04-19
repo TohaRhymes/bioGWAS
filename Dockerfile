@@ -1,9 +1,11 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9.12-slim
 
+# Install nano
+RUN apt-get update && apt-get install -y --no-install-recommends nano
 
 # Install system dependencies for R
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
     gnupg \
     dirmngr \
     software-properties-common \
