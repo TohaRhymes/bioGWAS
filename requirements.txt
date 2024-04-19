@@ -4,3 +4,4 @@ matplotlib==3.7.1
 seaborn==0.12.2
 snakemake==7.25.0
 PyYAML==6.0
+pulp<2.8
