@@ -96,7 +96,7 @@ rule find_included:
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
     message: 
         """
-        Description: Identifying included genes and SNPs for {input.vcf}."
+        Description: Identifying included genes and SNPs for {input.vcf}.
         I/O info:    Successfully identified included genes and SNPs in {output.included_txt}.
         Errors:      Check logs and in/out files, their formats and try again. 
         """
@@ -144,7 +144,7 @@ rule get_snps_list:
     message: 
         """
         Description: Generating causal SNPs list.
-        I/O info:    Causal SNPs list in {output.tsv}."
+        I/O info:    Causal SNPs list in {output.tsv}.
         Errors:      Check logs and in/out files, their formats and try again.
         """
     run:
