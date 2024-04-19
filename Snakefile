@@ -28,3 +28,10 @@ final_outputs+=module_draw_final_outputs
 rule all:
     input:
         final_outputs
+        
+onsuccess:
+    print("bioGWAS finished, no errors.")
+
+onerror:
+    print("An error occurred. Logs: {log}")
+    shell("Create an issue on https://github.com/TohaRhymes/bioGWAS/")

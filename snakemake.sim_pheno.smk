@@ -36,6 +36,12 @@ rule recode_merged:
         data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
         CAUSAL_MAF_MIN=CAUSAL_MAF_MIN,
         CAUSAL_MAF_MAX=CAUSAL_MAF_MAX 
+    message: 
+        """
+        Description: Recoding merged plinks's binary into VCF format {params.data}.vcf.
+        I/O info:    Files in VCF format {params.data}.vcf.
+        Errors:      That is probably plink2 error. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {PLINK2_PATH} --bfile {{params.data}} \
@@ -44,9 +50,6 @@ rule recode_merged:
         --max-maf {{params.CAUSAL_MAF_MAX}} \
         --out {{params.data}}
         """
-    message: "Recoding merged plinks's binary into VCF format {params.data}.vcf."
-    onsuccess: "Recoding into VCF format {params.data}.vcf completed."
-    onerror: "Error in recoding into VCF format {params.data}.vcf. That is probably plink2 error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
         
@@ -55,13 +58,16 @@ rule transform_gtf:
         gtf=GTF_IN
     output:
         filt_gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
+    message: 
+        """
+        Description: Transforming+filtering {input.gtf} gtf-file.
+        I/O info:    Transformed GTF file {output.filt_gtf}.
+        Errors:      Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/script_make_gtf.sh')} {{input.gtf}} {{output.filt_gtf}}
         """
-    message: "Transforming+filtering {input.gtf} gtf-file."
-    onsuccess: "GTF file {input.gtf} transformed successfully into {output.filt_gtf}."
-    onerror: "Error transforming GTF file {input.gtf} into {output.filt_gtf}. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
         
@@ -71,13 +77,16 @@ rule annotate_vcf:
         gtf=os.path.join(DATA_DIR,f"{get_file_name(GTF_IN)}_filt_sort.gtf")
     output:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf"),
+    message: 
+        """
+        Description: Annotating VCF file {input.vcf} using annotations in {input.gtf} and bedtools.
+        I/O info:    Annotated file is in: {output.vcf}.
+        Errors:      That can be problem in bedtools. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {BEDTOOLS_PATH} closest -a  {{input.vcf}} -b {{input.gtf}} > {{output.vcf}}
         """     
-    message: "Annotating VCF file {input.vcf} using annotations in {input.gtf} and bedtools."
-    onsuccess: "VCF file {input.vcf} annotated successfully. Annotated file is in: {output.vcf}."
-    onerror: "Error annotating VCF file {input.vcf}. That can be problem in bedtools. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
         
 rule find_included:
@@ -85,13 +94,16 @@ rule find_included:
         vcf=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_anno.vcf")
     output:
         included_txt = os.path.join(DATA_DIR, f'{PATTERN}_{CAUSAL_ID}_included_genes_snps.txt'),
+    message: 
+        """
+        Description: Identifying included genes and SNPs for {input.vcf}."
+        I/O info:    Successfully identified included genes and SNPs in {output.included_txt}.
+        Errors:      Check logs and in/out files, their formats and try again. 
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/find_included.sh')} {{input.vcf}} {{output.included_txt}}
         """      
-    message: "Identifying included genes and SNPs for {input.vcf}."
-    onsuccess: "Successfully identified included genes and SNPs for {input.vcf}."
-    onerror: "Error in identifying included genes and SNPs for {input.vcf}. Check logs and in/out files, their formats and try again. Logs are in: {log}."
         
             
 # Understand which to execute: select snps per pathway, or use preselected snps
@@ -129,6 +141,12 @@ rule get_snps_list:
         pheno_pattern=CAUSAL_ID,
         K=K,
         k=k
+    message: 
+        """
+        Description: Generating causal SNPs list.
+        I/O info:    Causal SNPs list in {output.tsv}."
+        Errors:      Check logs and in/out files, their formats and try again.
+        """
     run:
         if SNPS_PROVIDED:
             shell(f"""
@@ -152,10 +170,6 @@ rule get_snps_list:
             {{params.K}} \
             {{params.k}}
             """)     
-    message: "Generating causal SNPs list."
-    onsuccess: "Causal SNPs list generated successfully in {output.tsv}."
-    onerror: "Error in generating causal SNPs list. Check logs and in/out files, their formats and try again. Logs are in: {log}."
-
 
 
 
@@ -172,6 +186,12 @@ rule extract_snps:
     params:
         filt_sim_data=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim"),
         out_data=os.path.join(DATA_DIR, f"{PATTERN}_{CAUSAL_ID}_filt_sim_snps"),
+    message: 
+        """
+        Description: Extracting selected causal SNPs from plinks binary {params.filt_sim_data}.
+        I/O info:    Selected causal SNPs extracted from plinks binary are in: {params.out_data}
+        Errors:      That can be a problem in plink2. Check logs and in/out files, their formats and try again. 
+        """
     shell:
         f"""
         {PLINK2_PATH} \
@@ -179,9 +199,6 @@ rule extract_snps:
         --extract range {{input.tsv}} \
         --make-bed --out {{params.out_data}}
         """   
-    message: "Extracting selected causal SNPs from plinks binary {params.filt_sim_data}."
-    onsuccess: "Selected causal SNPs extracted successfully from plinks binary {params.filt_sim_data}. Corresponding plinks binary is: {params.out_data}"
-    onerror: "Error in extracting selected causal SNPs from plinks binary {params.filt_sim_data}. That can be a problem in plink2. Check logs and in/out files, their formats and try again. Logs are in: {log}."
 
 
 rule pheno_sim:
@@ -205,6 +222,12 @@ rule pheno_sim:
         PHI=PHI,
         ALPHA=ALPHA,
         SEED=SEED
+    message: 
+        """
+        Description: Simulating phenotypes from selected causal SNPs ({params.data}).
+        I/O info:    Simulated phenotype is in {output.tsv}.
+        Errors:      That can be an R error, or Phenotype simulator inner error. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/pheno_sim.R')} \
@@ -223,6 +246,3 @@ rule pheno_sim:
         {{ALPHA}} \
         {{SEED}}
         """   
-    message: "Simulating phenotypes from selected causal SNPs ({params.data})."
-    onsuccess: "Phenotype simulation from selected causal SNPs ({params.data}) completed}. Simulated phenotype is in {output.tsv}."
-    onerror: "Error in simulating phenotypes from selected causal SNPs ({params.data}). That can be an R error, or Phenotype simulator inner error. Check logs and in/out files, their formats and try again. Logs are in: {log}."

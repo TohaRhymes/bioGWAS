@@ -39,6 +39,12 @@ rule gwas:
         bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
         pheno=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_phenos"),
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas")
+    message: 
+        """
+        Description: Performing GWAS on plink binary {params.data} and {input.pheno}.
+        I/O info:    Summary statistics are in {output.gwas}
+        Errors:      That can be a plink's gwas error. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/gwas_analysis.sh')} \
@@ -47,7 +53,4 @@ rule gwas:
         {{params.gwas}} \
         {PLINK_PATH}
         """   
-    message: "Performing GWAS on plink binary {params.data} and {input.pheno}."
-    onsuccess: "GWAS on plink binary {params.data} and {input.pheno} completed successfully. Summary statistics are in {output.gwas}"
-    onerror: "Error performing GWAS on plink binary {params.data} and {input.pheno}}. That can be a plink's gwas error. Check logs and in/out files, their formats and try again. Logs are in: {log}."
            

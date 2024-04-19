@@ -44,16 +44,19 @@ rule pca:
         pca_vec=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.eigenvec")),
         pca_vec_indep=temp(os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep.eigenvec"))
     params:
-        bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim"),
+        bed=os.path.join(DATA_DIR, f"{PATTERN}_filt_sim")
+    message: 
+        """
+        Description: Executing PCA for {params.bed}. 
+        I/O info:    Result will be available in *.eigenval and *.eigenvec files.
+        Errors:      If the error occurs, it can be Python problem. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/calc_indep_snps_and_pca.sh')} \
         {{params.bed}} \
         {PLINK2_PATH}
         """         
-    message: "Executing PCA for {params.bed}."
-    onsuccess: "PCA executed successfully for {params.bed}."
-    onerror: "Error in PCA execution for {params.bed}. That can be Python problem. Check logs and in/out files, their formats and try again. Logs are in: {log}."
      
         
              
@@ -67,6 +70,12 @@ rule draw_gwas:
     params:
         name=f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas",
         bfile=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim")
+    message: 
+        """
+        Description: Drawing Manhattan and Q-Q plots for {params.gwas}.
+        I/O info:    Plots are in: {output.mh} & {output.qq}.
+        oErrors:      Error in drawing Manhattan and Q-Q plots. That can be R problem. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pvals.R')} \
@@ -84,10 +93,7 @@ rule draw_gwas:
    
         mv QQplot.pval_{{params.name}}.pdf {{output.qq}}
         mv Rectangular-Manhattan.pval_{{params.name}}.pdf {{output.mh}}
-        """       
-    message: "Drawing Manhattan and Q-Q plots for {params.gwas}."
-    onsuccess: "Manhattan and Q-Q plots drawn successfully for {params.gwas}. Files are in: {output.mh} & {output.qq}."
-    onerror: "Error in drawing Manhattan and Q-Q plots. That can be R problem. Check logs and in/out files, their formats and try again. Logs are in: {log}."
+        """ 
     
              
 rule draw_pca:
@@ -104,6 +110,12 @@ rule draw_pca:
         file_indep=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim_indep"),
         pdf=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim"),
         pdf_indep=os.path.join(IMAGES_DIR,f"{PATTERN}_filt_sim_indep")
+    message: 
+        """
+        Description: Creating PCA plots using previously computed PC.
+        I/O info:    PCA plots created successfully in pdf formats.
+        Errors:      Error in creating PCA plots. That can be Python problem. Check logs and in/out files, their formats and try again.
+        """
     shell:
         f"""
         {os.path.join(BIOGWAS_PATH, './pipeline_utils/draw_pca.py')} \
@@ -120,6 +132,3 @@ rule draw_pca:
         {PCA_HEIGHT} \
         {PCA_DPI}
         """   
-    message: "Creating PCA plots using previously computed PC."
-    onsuccess: "PCA plots created successfully."
-    onerror: "Error in creating PCA plots. That can be Python problem. Check logs and in/out files, their formats and try again. Logs are in: {log}."
