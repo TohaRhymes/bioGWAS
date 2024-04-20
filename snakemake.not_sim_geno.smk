@@ -131,9 +131,9 @@ rule postfilter:
 rule merge_chroms:
     input:
         chrom_list=VCFS_LIST_SIMULATED,
-        input_bed=expand("{file}_filt_sim.bed", file=new_files_pat),
-        input_bim=expand("{file}_filt_sim.bim", file=new_files_pat),
-        input_fam=expand("{file}_filt_sim.fam", file=new_files_pat)
+        input_bed=expand("{file}_filt_sim.bed", file=files_basenames),
+        input_bim=expand("{file}_filt_sim.bim", file=files_basenames),
+        input_fam=expand("{file}_filt_sim.fam", file=files_basenames)
     output:
         filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
