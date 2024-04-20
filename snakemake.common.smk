@@ -127,6 +127,8 @@ else:
     raise ValueError('You have to provide either `--geno_list`, or `--input_list`.')
     
 new_files = [os.path.join(DATA_DIR,f"{get_basename(f)}_filt_sim") for f in files]
+new_files_pat = [os.path.join(DATA_DIR,f"{get_basename(f)}") for f in files]
+
 with open(VCFS_LIST_SIMULATED, 'w') as f:
     f.write('\n'.join(new_files))
     

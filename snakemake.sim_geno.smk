@@ -9,7 +9,7 @@ import pandas as pd
 # READ FILES
 # ===================================
 
-files_basenames = [remove_ext(f) for f in files]
+files_basenames = [get_basename(f) for f in files]
 module_sim_geno_final_outputs = [
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
@@ -235,9 +235,9 @@ rule make_bed_from_hapgen2:
 rule merge_chroms:
     input:
         chrom_list=VCFS_LIST_SIMULATED,
-        input_bed=expand("{file}_filt_sim.bed", file=files_basenames),
-        input_bim=expand("{file}_filt_sim.bim", file=files_basenames),
-        input_fam=expand("{file}_filt_sim.fam", file=files_basenames)
+        input_bed=expand("{file}_filt_sim.bed", file=new_files_pat),
+        input_bim=expand("{file}_filt_sim.bim", file=new_files_pat),
+        input_fam=expand("{file}_filt_sim.fam", file=new_files_pat)
     output:
         filt_sim_bed=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
         filt_sim_bim=os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
