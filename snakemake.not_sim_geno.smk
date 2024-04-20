@@ -25,8 +25,6 @@ rule module_not_sim_geno_all:
 # SKIP SIMULATION -- but prepare genos 
 # ===================================
 
-ruleorder: prefilter > get_filtered_variants_samples > postfilter > merge_chroms > module_not_sim_geno_all
-
 rule prefilter:
     input:
         vcf=lambda wildcards: next(
