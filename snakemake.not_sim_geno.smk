@@ -9,7 +9,7 @@ import pandas as pd
 # READ FILES
 # ===================================
 
-files_basenames = [get_basename(f) for f in files]
+files_basenames = [remove_ext(f) for f in files]
 module_not_sim_geno_final_outputs = [
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bed"),
     os.path.join(DATA_DIR,f"{PATTERN}_filt_sim.bim"),
