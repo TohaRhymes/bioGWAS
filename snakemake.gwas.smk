@@ -41,7 +41,7 @@ rule gwas:
         gwas=os.path.join(DATA_DIR,f"{PATTERN}_{CAUSAL_ID}_{SIM_ID}_gwas")
     message: 
         """
-        Description: Performing GWAS on plink binary {params.data} and {input.pheno}.
+        Description: Performing GWAS on plink binary {params.bed} and {input.pheno}.
         I/O info:    Summary statistics are in {output.gwas}
         Errors:      That can be a plink's gwas error. Check logs and in/out files, their formats and try again.
         """
