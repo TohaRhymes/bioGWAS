@@ -221,7 +221,9 @@ rule pheno_sim:
         THETA=THETA,
         PHI=PHI,
         ALPHA=ALPHA,
-        SEED=SEED
+        SEED=SEED, 
+        BINARY_PHENO="TRUE" if BINARY_PHENO else "FALSE",
+        CASE_FRACTION=CASE_FRACTION
     message: 
         """
         Description: Simulating phenotypes from selected causal SNPs ({params.data}).
@@ -234,7 +236,6 @@ rule pheno_sim:
         ./ \
         {{params.data}} \
         {{output.tsv}} \
-        {{params.N}} \
         {{input.K_file}} \
         {{M_BETA}} \
         {{SD_BETA}} \
@@ -244,5 +245,7 @@ rule pheno_sim:
         {{THETA}} \
         {{PHI}} \
         {{ALPHA}} \
-        {{SEED}}
+        {{SEED}} \
+        {{BINARY_PHENO}} \
+        {{CASE_FRACTION}}
         """   

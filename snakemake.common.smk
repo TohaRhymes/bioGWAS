@@ -73,6 +73,9 @@ N = config['N']
 K = config['K']
 k = config['k']
 
+BINARY_PHENO = config['binary_pheno']
+CASE_FRACTION = config['case_fraction']
+
 M_BETA = config['m_beta']
 SD_BETA = config['sd_beta']
 GEN_VAR = config['gen_var']
