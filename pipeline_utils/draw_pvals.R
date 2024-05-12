@@ -12,28 +12,19 @@ colors <- c("#bebada", "#fb8072", "#80b1d3", "#fdb462", "#b3de69", "#fccde5", "#
 
 
 
-# todo: merge these f's:
 # function checks check_var for true/false value
 is_true_or_false <- function(check_var) {
+  if(is.na(check_var)){
+    return(FALSE)
+  }
+    
   check_var_ <- as.character(check_var)
-  
   check_var_ <- toupper(check_var_)
-  
   if (check_var_ %in% c("1", "TRUE", "T")) {
     return(TRUE)
   } else {
     return(FALSE)
   }
-}
-# string to boolean
-str2bool <- function(input_str)
-{
-  if(input_str == "0" || input_str == "FALSE" || input_str == "False" || input_str == "false" || input_str == "F"  || input_str == "f"){
-    input_str = FALSE
-  }else{
-    input_str = TRUE
-  }
-  return(input_str)
 }
 
 
@@ -209,10 +200,10 @@ for (arg in args){
 args = commandArgs(trailingOnly=TRUE)
 pheno_name <- args[1]
 file_pval <- args[2]
-clump <- str2bool(args[3])
+clump <- is_true_or_false(args[3])
 file_binary <- args[4]
 PLINK_PATH <- args[5]
-delete_sex <- args[6]
+delete_sex <- is_true_or_false(args[6])
 
 qq_width <- args[7]
 qq_height <- args[8]
@@ -221,11 +212,6 @@ mh_width <- args[10]
 mh_height <- args[11]
 mh_dpi <- args[12]
 
-if(is.na(delete_sex)){
-  delete_sex <- FALSE
-}else{
-  delete_sex <- is_true_or_false(delete_sex)
-}
 
 #read and parse table with snps
 

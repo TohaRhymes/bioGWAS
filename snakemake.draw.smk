@@ -84,6 +84,7 @@ rule draw_gwas:
         TRUE \
         {{params.bfile}} \
         {PLINK_PATH} \
+        TRUE \
         {QQ_WIDTH} \
         {QQ_HEIGHT} \
         {QQ_DPI} \
