@@ -51,15 +51,15 @@ pattern: {pattern}
 causal_id: {causal_id}
 sim_id: {sim_id}
 draw_flag: {draw_flag}
-pca_width: {pca_width},
-pca_height: {pca_height}, 
-pca_dpi: {pca_dpi},
-qq_width: {qq_width}, 
-qq_height: {qq_height}, 
-qq_dpi: {qq_dpi},
-mh_width: {mh_width}, 
-mh_height: {mh_height}, 
-mh_dpi: {mh_dpi},
+pca_width: {pca_width}
+pca_height: {pca_height}
+pca_dpi: {pca_dpi}
+qq_width: {qq_width}
+qq_height: {qq_height}
+qq_dpi: {qq_dpi}
+mh_width: {mh_width}
+mh_height: {mh_height}
+mh_dpi: {mh_dpi}
 
 seed: {seed}"""
 
@@ -167,7 +167,7 @@ def main(path, args):
         "K": check_value_in_range_and_return(args.K, "K", val_min=0),
         "k": check_value_in_range_and_return(args.k, "k", val_min=0, val_max=args.K), 
         "binary_pheno": args.binary_pheno,
-        "case_fraction": check_value_in_range_and_return(args.case_fraction, "case_fraction", val_min=0, val_max=1)
+        "case_fraction": check_value_in_range_and_return(args.case_fraction, "case_fraction", val_min=0, val_max=1),
         "m_beta": args.m_beta,
         "sd_beta": args.sd_beta,
         "gen_var": args.gen_var,
