@@ -162,7 +162,7 @@ def main(path, args):
         "maf_filter": check_value_in_range_and_return(args.maf_filter, 'maf_filter', val_min=0, val_max=0.5),
         "causal_maf_min": check_value_in_range_and_return(args.causal_maf_min, 'causal_maf_min', val_min=0, val_max=0.5),
         "causal_maf_max": check_value_in_range_and_return(args.causal_maf_max, 'causal_maf_max', val_min=0, val_max=0.5),
-        "N": check_value_in_range(args.N, "N", val_min=0),
+        "N": check_value_in_range_and_return(args.N, "N", val_min=0),
         "skip_simulation": args.skip_simulation,
         "K": check_value_in_range_and_return(args.K, "K", val_min=0),
         "k": check_value_in_range_and_return(args.k, "k", val_min=0, val_max=args.K), 
