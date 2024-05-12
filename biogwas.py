@@ -38,6 +38,8 @@ skip_simulation: {skip_simulation}
 
 K: {K}
 k: {k}
+binary_pheno: {binary_pheno}
+case_fraction: {case_fraction}
 m_beta: {m_beta}
 sd_beta: {sd_beta}
 gen_var: {gen_var}
@@ -71,6 +73,31 @@ LOGO = """
 
 (C) Changalidis et al., 2023
 """
+
+def check_value_in_range_and_return(val, val_name, val_min=None, val_max=None):
+    """
+    Checks if the given value falls within the specified range.
+
+    Parameters:
+    - val (float or int): The value to check.
+    - val_name (str): The name of the variable for error messages.
+    - val_min (float or int, optional): The minimum allowable value.
+    - val_max (float or int, optional): The maximum allowable value.
+
+    Raises:
+    - ValueError: If the value is out of the specified range or input parameters are not consistent.
+    """
+    if val_min is not None and val_max is not None:
+        if val < val_min or val > val_max:
+            raise ValueError(f"{val_name} must be between {val_min} and {val_max}, but got {val}.")
+    elif val_min is not None:
+        if val < val_min:
+            raise ValueError(f"{val_name} must be greater than or equal to {val_min}, but got {val}.")
+    elif val_max is not None:
+        if val > val_max:
+            raise ValueError(f"{val_name} must be less than or equal to {val_max}, but got {val}.")
+    return val
+
 
 
 def check_and_make_dir(dir_path):
@@ -132,13 +159,15 @@ def main(path, args):
         "causal_snps": abs_path_check_none(args.causal_snps),
         "sample_call_rate": args.sample_call_rate,
         "variant_call_rate": args.variant_call_rate,
-        "maf_filter": args.maf_filter,
-        "causal_maf_min": args.causal_maf_min,
-        "causal_maf_max": args.causal_maf_max,
-        "N": args.N,
+        "maf_filter": check_value_in_range_and_return(args.maf_filter, 'maf_filter', val_min=0, val_max=0.5),
+        "causal_maf_min": check_value_in_range_and_return(args.causal_maf_min, 'causal_maf_min', val_min=0, val_max=0.5),
+        "causal_maf_max": check_value_in_range_and_return(args.causal_maf_max, 'causal_maf_max', val_min=0, val_max=0.5),
+        "N": check_value_in_range(args.N, "N", val_min=0),
         "skip_simulation": args.skip_simulation,
-        "K": args.K,
-        "k": args.k,
+        "K": check_value_in_range_and_return(args.K, "K", val_min=0),
+        "k": check_value_in_range_and_return(args.k, "k", val_min=0, val_max=args.K), 
+        "binary_pheno": args.binary_pheno,
+        "case_fraction": check_value_in_range_and_return(args.case_fraction, "case_fraction", val_min=0, val_max=1)
         "m_beta": args.m_beta,
         "sd_beta": args.sd_beta,
         "gen_var": args.gen_var,
@@ -389,6 +418,25 @@ if __name__ == "__main__":
         default=5,
         type=int,
         help="Required when `--use_causal_snps` is set to False. Amount of causal SNPs selected from causal gene sets' genes (other causal SNPs are chosen randomly).",
+    )
+    
+    sim_pheno_settings.add_argument(
+        "-bp",
+        "--binary_pheno",
+        action=argparse.BooleanOptionalAction,
+        required=False,
+        default=False,
+        type=bool,
+        help="If flag is set, phenotypes are simulated as binary traits (e.g. case/control): the fraction of the number of cases is given by parameter `--case_fraction`, hence 1-`case_fraction` is the fraction of the number of controls. If the flag is not set, continuous phenotype is generated (from normal distribution).",
+    )
+
+    sim_pheno_settings.add_argument(
+        "-cf",
+        "--case_fraction",
+        required=False,
+        default=0.5,
+        type=float,
+        help="If simulate binary phenotype: the fraction of the number of cases, (therefore, 1-`case_fraction` is the fraction of the number of controls). Should be from 0 to 1.",
     )
 
     sim_pheno_settings.add_argument(

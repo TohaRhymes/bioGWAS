@@ -15,6 +15,14 @@ def get_basename(full_path: str):
     
 def remove_ext(full_path: str):
     return os.path.splitext(full_path)[0]
+    
+def count_rows_in_file(filename):
+    try:
+        with open(filename, 'r') as file:
+            count = sum(1 for line in file)
+        return count
+    except FileNotFoundError:
+        return f"File {filename} not found."
 
 
 # ===================================
