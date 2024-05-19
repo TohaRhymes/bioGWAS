@@ -47,7 +47,7 @@ rule gwas:
         """
     shell:
         f"""
-        {os.path.join(BIOGWAS_PATH, './pipeline_utils/gwas_analysis.sh')} \
+        {os.path.join(BIOGWAS_PATH, './pipeline_utils/gwas_analysis_binary.sh' if BINARY_PHENO else './pipeline_utils/gwas_analysis.sh')} \
         {{params.bed}} \
         {{params.pheno}} \
         {{params.gwas}} \
