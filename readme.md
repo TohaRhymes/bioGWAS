@@ -334,3 +334,26 @@ biogwas \
 ### 6. Wait!
 
 After finishing, all output data will be in `./data` dir.
+
+# Citation
+
+When use, please cite:
+
+```
+
+@Article{biology13010010,
+AUTHOR = {Changalidis, Anton I. and Alexeev, Dmitry A. and Nasykhova, Yulia A. and Glotov, Andrey S. and Barbitoff, Yury A.},
+TITLE = {bioGWAS: A Simple and Flexible Tool for Simulating GWAS Datasets},
+JOURNAL = {Biology},
+VOLUME = {13},
+YEAR = {2024},
+NUMBER = {1},
+ARTICLE-NUMBER = {10},
+URL = {https://www.mdpi.com/2079-7737/13/1/10},
+PubMedID = {38248441},
+ISSN = {2079-7737},
+ABSTRACT = {Genome-wide association studies (GWAS) have proven to be a powerful tool for the identification of genetic susceptibility loci affecting human complex traits. In addition to pinpointing individual genes involved in a particular trait, GWAS results can be used to discover relevant biological processes for these traits. The development of new tools for extracting such information from GWAS results requires large-scale datasets with known biological ground truth. Simulation of GWAS results is a powerful method that may provide such datasets and facilitate the development of new methods. In this work, we developed bioGWAS, a simple and flexible pipeline for the simulation of genotypes, phenotypes, and GWAS summary statistics. Unlike existing methods, bioGWAS can be used to generate GWAS results for simulated quantitative and binary traits with a predefined set of causal genetic variants and/or molecular pathways. We demonstrate that the proposed method can recapitulate complete GWAS datasets using a set of reported genome-wide associations. We also used our method to benchmark several tools for gene set enrichment analysis for GWAS data. Taken together, our results suggest that bioGWAS provides an important set of functionalities that would aid the development of new methods for downstream processing of GWAS results.},
+DOI = {10.3390/biology13010010}
+}
+
+```
