@@ -107,10 +107,10 @@ rule postfilter:
         bim=temp("{file}_filt_sim.bim"),
         fam=temp("{file}_filt_sim.fam")  
     params:
-        bfile="{file}"
+        bfile="{file}_prefilt"
     message:
         """
-        Description: Starting preparation of {params.bfile}: filter by call rate. 
+        Description: Continue preparation of {params.bfile}: filter by call rate. 
         I/O info:    Result will be available in {output} PLINK's bfile.
         Errors:      If the error occurs, possible reasons are: problems with MAF or sample filters. Check PLINK requirements if this happened. Check logs and in/out files, their formats and try again. Logs are in: {log}.
         """
