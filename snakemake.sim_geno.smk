@@ -58,7 +58,10 @@ rule get_filtered_variants_samples:
         smiss="{file}_prefilt.smiss" 
     output:  
         vmiss=temp("{file}_filt.vmiss"),    
-        smiss=temp("{file}_filt.smiss")    
+        smiss=temp("{file}_filt.smiss")       
+    params:
+        scr=SAMPLE_CALL_RATE,
+        vcr=VARIANT_CALL_RATE     
     message:
         """
         Description: Get samples and variants to filter due to call rate. 
@@ -67,11 +70,11 @@ rule get_filtered_variants_samples:
         """
     shell:
         f"""
-        awk 'NR>1 && $4 > 0' \
+        awk 'NR>1 && $4 > (1 - scr)' \
         {{input.smiss}} \
         > {{output.smiss}}
         
-        awk 'NR>1 && $5 > 0' \
+        awk 'NR>1 && $5 > (1 - vcr)' \
         {{input.vmiss}} \
         > {{output.vmiss}}
         """        
