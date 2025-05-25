@@ -85,11 +85,11 @@ rule get_filtered_variants_samples:
         """
     shell:
         f"""
-        awk 'NR>1 && $4 > (1 - scr)' \
+        awk -v scr={{params.scr}} 'NR>1 && $5 > (1 - scr)' \
         {{input.smiss}} \
         > {{output.smiss}}
         
-        awk 'NR>1 && $5 > (1 - vcr)' \
+        awk -v vcr={{params.vcr}} 'NR>1 && $5 > (1 - vcr)' \
         {{input.vmiss}} \
         > {{output.vmiss}}
         """        
